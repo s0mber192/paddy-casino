@@ -28,4 +28,4 @@ services:
       - app
 
 volumes:
-  caddy_data:
+        - /opt/paddy-data:/data
