@@ -22,9 +22,13 @@ export default function App() {
   const [prize, setPrize] = useState<{ reward: number; price: number } | null>(null);
   const popId = useRef(0);
 
+  // Стейты для модалки кейсов
   const [caseRolling, setCaseRolling] = useState(false);
+  const [showCaseModal, setShowCaseModal] = useState(false);
+  const [openingCase, setOpeningCase] = useState<CaseDto | null>(null);
   const [caseStrip, setCaseStrip] = useState<number[]>([]);
   const [caseOffset, setCaseOffset] = useState(0);
+  const [caseResult, setCaseResult] = useState<number | null>(null);
   
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -69,37 +73,50 @@ export default function App() {
     api.click().then((r) => setUser((u) => (u && r.totalClicks >= u.totalClicks ? { ...u, balance: r.balance, totalClicks: r.totalClicks } : u))).catch(() => {});
   }, [user, coinsPerClick]);
 
+  // ОТКРЫТИЕ КЕЙСА
   const onOpenCase = async (c: CaseDto) => {
     if (caseRolling || !user || user.balance < c.price_coins) return;
-    setCaseRolling(true); haptic('medium');
     
-    // СПИСЫВАЕМ СРАЗУ
+    setOpeningCase(c);
+    setShowCaseModal(true);
+    setCaseRolling(true);
+    setCaseResult(null);
+    haptic('medium');
+    
+    // Списываем сразу
     setUser((u) => (u ? { ...u, balance: u.balance - c.price_coins } : u));
 
     try {
       const r = await api.openCase(c.id);
-      
-      // Генерируем ленту из реальных призов этого кейса
+      setCaseResult(r.reward);
+
+      // Генерируем ленту: 45 рандомных + выигрыш на 45-й позиции
       const prizes = c.rewards;
       const strip = Array.from({ length: 50 }, () => prizes[Math.floor(Math.random() * prizes.length)]);
-      
-      // На 45-й позиции ставим выигрыш (чтобы анимация остановилась на нем)
       strip[45] = r.reward;
       
       setCaseStrip(strip);
-      setCaseOffset(45 * 80); // 80px = ширина карточки (70) + отступ (10)
       
+      // Ставим смещение так, чтобы 45-й элемент был ровно по центру
+      // 80px ширина элемента (70 + 10 gap). 45 * 80 = 3600
+      // Центр экрана - 50vw. Нам нужно сдвинуть ленту так, чтобы 45-й элемент оказался в центре.
+      // Формула: -(index * 80) + (50vw - 40) (40 это половина ширины карточки)
+      // Для простоты просто используем 50vw
       setTimeout(() => {
+        setCaseOffset(window.innerWidth / 2 - 40 - 45 * 80);
+      }, 50);
+
+      setTimeout(() => {
+        setCaseRolling(false);
         // Синхронизируем баланс с сервером
         api.me().then(res => setUser(res.user)).catch(console.error);
-        setPrize({ reward: r.reward, price: c.price_coins });
-        setCaseRolling(false);
-        setCaseStrip([]);
-        setCaseOffset(0);
       }, 12000);
+
     } catch { 
       setCaseRolling(false); 
+      setShowCaseModal(false);
       api.me().then(res => setUser(res.user)).catch(console.error);
+      alert('Ошибка при открытии кейса');
     }
   };
 
@@ -199,12 +216,94 @@ export default function App() {
   const targetPrice = selectedGift ? selectedGift.price_stars : 0;
   const chancePercent = targetPrice > 0 ? Math.min(95, Math.floor((upgradeBet / targetPrice) * 100)) : 0;
 
+  // Вспомогательная функция для иконок кейсов
+  const getCaseIcon = (slug: string) => {
+    switch (slug) {
+      case 'starter': return '🎁';
+      case 'premium': return '💎';
+      case 'epic_gift': return '🏆';
+      case 'movie': return '🎬';
+      case 'space': return '🚀';
+      default: return '📦';
+    }
+  };
+
   return (
     <div className="screen" style={{ paddingBottom: '70px' }}>
       <header className="top">
         <span className="logo">PADDY<b>CASINO</b></span>
         <span className="who">{user.firstName} | {user.balance.toLocaleString('ru-RU')} 🪙</span>
       </header>
+
+      {/* --- МОДАЛКА ДЛЯ КЕЙСОВ --- */}
+      {showCaseModal && openingCase && (
+        <div className="modal" style={{ zIndex: 10000, background: 'rgba(0,0,0,0.95)' }}>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h2 style={{ color: 'var(--win)', marginBottom: '20px' }}>Открываем {openingCase.name}</h2>
+            
+            <div style={{ width: '100%', height: '120px', background: '#0a0a0c', border: '2px solid var(--win)', borderRadius: '16px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
+              {/* Центральная линия */}
+              <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '4px', background: 'var(--win)', zIndex: 10, transform: 'translateX(-50%)', boxShadow: '0 0 15px var(--win)' }} />
+              
+              {/* Лента */}
+              <div 
+                style={{ 
+                  display: 'flex',
+                  gap: '10px',
+                  padding: '0 20px',
+                  transform: `translateX(${caseOffset}px)`,
+                  transition: caseRolling ? 'transform 12s cubic-bezier(0.1, 0.9, 0.2, 1)' : 'none'
+                }}
+              >
+                {caseStrip.map((reward, i) => (
+                  <div key={i} style={{ 
+                    width: '70px', 
+                    height: '90px', 
+                    background: 'var(--card)', 
+                    border: '1px solid var(--line)', 
+                    borderRadius: '8px', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    flexShrink: 0,
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    {reward.toLocaleString('ru-RU')} 🪙
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {!caseRolling && caseResult !== null && (
+              <div style={{ marginTop: '30px', textAlign: 'center', animation: 'fadeIn 0.5s' }}>
+                <h3 style={{ color: 'var(--muted)' }}>Вы выиграли:</h3>
+                <div style={{ fontSize: '48px', fontWeight: 'bold', color: 'var(--win)', margin: '10px 0' }}>
+                  {caseResult.toLocaleString('ru-RU')} 🪙
+                </div>
+                <button 
+                  className="btn" 
+                  style={{ padding: '15px 40px', fontSize: '16px' }} 
+                  onClick={() => {
+                    setShowCaseModal(false);
+                    setOpeningCase(null);
+                    setCaseResult(null);
+                    setCaseOffset(0);
+                    setCaseStrip([]);
+                  }}
+                >
+                  Забрать
+                </button>
+              </div>
+            )}
+            
+            {caseRolling && (
+               <div style={{ marginTop: '30px', color: 'var(--muted)' }}>Крутим...</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {activeTab === 'main' && (
         <div className="tab-content center" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -327,23 +426,6 @@ export default function App() {
                 <div className="game-content">
                   <h2 style={{ textAlign: 'center', color: 'var(--win)', marginBottom: '20px' }}>Кейсы</h2>
                   
-                  {caseRolling && caseStrip.length > 0 && (
-                    <div style={{ width: '100%', height: '80px', background: '#0a0a0c', border: '1px solid var(--win)', borderRadius: '12px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                      <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '2px', background: 'var(--win)', zIndex: 10 }} />
-                      <div 
-                        className="case-strip"
-                        style={{ 
-                          transform: `translateX(-${caseOffset}px)`,
-                          transition: 'transform 12s cubic-bezier(0.1, 0.9, 0.2, 1)'
-                        }}
-                      >
-                        {caseStrip.map((reward, i) => (
-                          <div key={i} className="case-strip-item">{reward.toLocaleString('ru-RU')} 🪙</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {cases.map((c) => (
                       <div 
@@ -360,13 +442,18 @@ export default function App() {
                           position: 'relative'
                         }}
                       >
-                        <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                          <img 
-                            src={c.image_url} 
-                            alt={c.name} 
-                            style={{ width: '80px', height: '80px', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} 
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                          />
+                        <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', fontSize: '64px' }}>
+                          {/* Если есть картинка, показываем её, если нет - эмодзи */}
+                          {c.image_url && !c.image_url.includes('undefined') ? (
+                             <img 
+                               src={c.image_url} 
+                               alt={c.name} 
+                               style={{ width: '80px', height: '80px', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} 
+                               onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = getCaseIcon(c.slug || ''); }}
+                             />
+                          ) : (
+                             getCaseIcon(c.slug || '')
+                          )}
                         </div>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>{c.name}</div>
                         <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>
