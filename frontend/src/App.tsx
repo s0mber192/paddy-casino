@@ -41,7 +41,6 @@ export default function App() {
   const [mysteryBet, setMysteryBet] = useState(100);
   const [isMystery, setIsMystery] = useState(false);
   
-  // Стейт для вывода
   const [withdrawAmount, setWithdrawAmount] = useState<number | ''>('');
 
   useEffect(() => {
@@ -68,7 +67,7 @@ export default function App() {
   }, [user, coinsPerClick]);
 
   const onOpenCase = async (c: CaseDto) => {
-    if (caseRolling || !user || user.balance < c.price) return;
+    if (caseRolling || !user || user.balance < c.price_coins) return;
     setCaseRolling(true); haptic('medium');
     try {
       const r = await api.openCase(c.id);
@@ -117,7 +116,6 @@ export default function App() {
     }
   };
 
-  // ИСПРАВЛЕННЫЙ МИСТЕРИ: списываем сразу, при ошибке синхронизируем
   const onMysteryUpgrade = async () => {
     if (isMystery || !user || user.balance < mysteryBet) return;
     setIsMystery(true); haptic('heavy');
@@ -314,17 +312,53 @@ export default function App() {
                       </div>
                     </div>
                   )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {cases.map((c) => (
-                      <div className="case-card" key={c.id}>
-                        <div className="case-info">
-                          <span className="case-icon">🎁</span>
-                          <div>
-                            <div className="case-name">{c.name}</div>
-                            <div className="case-range">{Math.min(...c.rewards)} – {Math.max(...c.rewards)} 🪙</div>
-                          </div>
+                      <div 
+                        key={c.id} 
+                        style={{ 
+                          background: 'var(--card)', 
+                          border: '1px solid var(--line)', 
+                          borderRadius: '16px', 
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '10px',
+                          position: 'relative'
+                        }}
+                      >
+                        <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                          <img 
+                            src={c.image_url} 
+                            alt={c.name} 
+                            style={{ width: '80px', height: '80px', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} 
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
                         </div>
-                        <button className="btn" disabled={user.balance < c.price || caseRolling} onClick={() => onOpenCase(c)}>Открыть · {c.price}</button>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>{c.name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>
+                          {c.currency === 'coins' ? `${c.price_coins} 🪙` : `${c.price_stars} ⭐`}
+                        </div>
+                        <button 
+                          className="btn" 
+                          style={{ width: '100%', padding: '10px', fontSize: '13px' }}
+                          disabled={
+                            (c.currency === 'coins' && user.balance < c.price_coins) ||
+                            (c.currency === 'stars') ||
+                            caseRolling
+                          }
+                          onClick={() => {
+                            if (c.currency === 'coins') {
+                              onOpenCase(c);
+                            } else {
+                              alert('Покупка за звезды скоро появится!');
+                            }
+                          }}
+                        >
+                          {c.currency === 'stars' ? 'Скоро' : `Открыть`}
+                        </button>
                       </div>
                     ))}
                   </div>

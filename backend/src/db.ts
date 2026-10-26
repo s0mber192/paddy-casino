@@ -28,7 +28,10 @@ CREATE TABLE IF NOT EXISTS cases (
   id    INTEGER PRIMARY KEY AUTOINCREMENT,
   slug  TEXT NOT NULL UNIQUE,
   name  TEXT NOT NULL,
-  price INTEGER NOT NULL CHECK (price > 0),
+  price_coins INTEGER DEFAULT 0,
+  price_stars INTEGER DEFAULT 0,
+  currency TEXT DEFAULT 'coins',
+  image_url TEXT,
   loot  TEXT NOT NULL
 );
 
@@ -37,7 +40,7 @@ CREATE TABLE IF NOT EXISTS case_openings (
   telegram_id INTEGER NOT NULL REFERENCES users(telegram_id),
   case_id     INTEGER NOT NULL REFERENCES cases(id),
   price       INTEGER NOT NULL,
-  reward      INTEGER NOT NULL,
+  reward      TEXT NOT NULL,
   created_at  INTEGER NOT NULL
 );
 
@@ -50,17 +53,100 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 );
 `);
 
+// НОВЫЕ КЕЙСЫ
 const seedLoot = [
-  { reward: 20, weight: 40 },
-  { reward: 50, weight: 30 },
-  { reward: 100, weight: 15 },
-  { reward: 200, weight: 10 },
-  { reward: 500, weight: 4 },
-  { reward: 2000, weight: 1 },
+  // Starter (1000 коинов) - только коины
+  {
+    slug: 'starter',
+    name: 'Starter',
+    price_coins: 1000,
+    price_stars: 0,
+    currency: 'coins',
+    image_url: 'https://api.changes.tg/original/13',
+    loot: [
+      { reward: 200, weight: 40 },
+      { reward: 500, weight: 30 },
+      { reward: 1000, weight: 15 },
+      { reward: 2000, weight: 10 },
+      { reward: 5000, weight: 4 },
+      { reward: 20000, weight: 1 },
+    ],
+  },
+  // Premium (10000 коинов) - подарки (медведь, сердечко, кубок, бутылка, алмаз, роза)
+  {
+    slug: 'premium',
+    name: 'Premium',
+    price_coins: 10000,
+    price_stars: 0,
+    currency: 'coins',
+    image_url: 'https://api.changes.tg/original/164',
+    loot: [
+      { reward: 1000, weight: 30 },
+      { reward: 5000, weight: 20 },
+      { reward: 10000, weight: 15 },
+      { reward: 50000, weight: 10 },
+      { reward: 100000, weight: 5 },
+      { reward: 500000, weight: 1 },
+    ],
+  },
+  // === КЕЙСЫ ЗА ЗВЕЗДЫ (ПОКА ЗАГЛУШКА) ===
+  {
+    slug: 'epic_gift',
+    name: 'Epic Gift',
+    price_coins: 0,
+    price_stars: 2,
+    currency: 'stars',
+    image_url: 'https://api.changes.tg/original/164',
+    loot: [
+      { reward: 5000, weight: 30 },
+      { reward: 10000, weight: 20 },
+      { reward: 50000, weight: 15 },
+      { reward: 100000, weight: 10 },
+      { reward: 500000, weight: 5 },
+      { reward: 2000000, weight: 1 },
+    ],
+  },
+  {
+    slug: 'movie',
+    name: 'Movie',
+    price_coins: 0,
+    price_stars: 4,
+    currency: 'stars',
+    image_url: 'https://api.changes.tg/original/47',
+    loot: [
+      { reward: 10000, weight: 30 },
+      { reward: 50000, weight: 20 },
+      { reward: 100000, weight: 15 },
+      { reward: 500000, weight: 10 },
+      { reward: 1000000, weight: 5 },
+      { reward: 5000000, weight: 1 },
+    ],
+  },
+  {
+    slug: 'space',
+    name: 'Space',
+    price_coins: 0,
+    price_stars: 6,
+    currency: 'stars',
+    image_url: 'https://api.changes.tg/original/45',
+    loot: [
+      { reward: 20000, weight: 30 },
+      { reward: 100000, weight: 20 },
+      { reward: 500000, weight: 15 },
+      { reward: 1000000, weight: 10 },
+      { reward: 5000000, weight: 5 },
+      { reward: 10000000, weight: 1 },
+    ],
+  },
 ];
-db.prepare(
-  `INSERT OR IGNORE INTO cases (slug, name, price, loot) VALUES (?, ?, ?, ?)`,
-).run('starter', 'Starter Case', 100, JSON.stringify(seedLoot));
+
+// Пересоздаем кейсы (удаляем старые и вставляем новые)
+db.exec(`DELETE FROM cases;`);
+for (const c of seedLoot) {
+  db.prepare(
+    `INSERT INTO cases (slug, name, price_coins, price_stars, currency, image_url, loot) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(c.slug, c.name, c.price_coins, c.price_stars, c.currency, c.image_url, JSON.stringify(c.loot));
+}
 
 export interface UserRow {
   telegram_id: number;
@@ -73,7 +159,7 @@ export interface UserRow {
   referrer_id: number | null;
   created_at: number;
 }
-interface CaseRow { id: number; slug: string; name: string; price: number; loot: string }
+interface CaseRow { id: number; slug: string; name: string; price_coins: number; price_stars: number; currency: string; image_url: string; loot: string; }
 interface LootItem { reward: number; weight: number }
 
 export class GameError extends Error {
@@ -101,11 +187,14 @@ export function upsertUser(u: TgUser): UserRow {
 }
 
 export function listCases() {
-  const rows = db.prepare<[], CaseRow>(`SELECT * FROM cases ORDER BY price`).all();
+  const rows = db.prepare<[], CaseRow>(`SELECT * FROM cases ORDER BY price_coins ASC`).all();
   return rows.map((c) => ({
     id: c.id,
     name: c.name,
-    price: c.price,
+    price_coins: c.price_coins,
+    price_stars: c.price_stars,
+    currency: c.currency,
+    image_url: c.image_url,
     rewards: (JSON.parse(c.loot) as LootItem[]).map((l) => l.reward),
   }));
 }
@@ -139,19 +228,21 @@ export const openCase = db.transaction((telegramId: number, caseId: number) => {
   const c = db.prepare<[number], CaseRow>(`SELECT * FROM cases WHERE id = ?`).get(caseId);
   if (!c) throw new GameError('CASE_NOT_FOUND', 404);
 
+  if (c.currency === 'stars') throw new GameError('STARS_NOT_SUPPORTED_YET', 400);
+
   const user = getUserStmt.get(telegramId);
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
-  if (user.balance < c.price) throw new GameError('INSUFFICIENT_FUNDS', 402);
+  if (user.balance < c.price_coins) throw new GameError('INSUFFICIENT_FUNDS', 402);
 
   const reward = rollLoot(JSON.parse(c.loot) as LootItem[]);
 
   db.prepare(`UPDATE users SET balance = balance - ? + ? WHERE telegram_id = ?`)
-    .run(c.price, reward, telegramId);
+    .run(c.price_coins, reward, telegramId);
   db.prepare(
     `INSERT INTO case_openings (telegram_id, case_id, price, reward, created_at) VALUES (?, ?, ?, ?, ?)`,
-  ).run(telegramId, c.id, c.price, reward, Date.now());
+  ).run(telegramId, c.id, c.price_coins, String(reward), Date.now());
 
-  return { reward, price: c.price, balance: getUserStmt.get(telegramId)!.balance };
+  return { reward, price: c.price_coins, balance: getUserStmt.get(telegramId)!.balance };
 });
 
 export function spinWheel(telegramId: number) {
@@ -159,7 +250,7 @@ export function spinWheel(telegramId: number) {
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
 
   const now = Date.now();
-  const cooldown = 10 * 1000; // 10 сек для теста
+  const cooldown = 10 * 1000;
 
   if (now - user.last_wheel_spin < cooldown) {
     throw new GameError('WHEEL_COOLDOWN', 429);
@@ -208,7 +299,6 @@ export function mysteryUpgrade(telegramId: number, bet: number) {
   return { winAmount, newBalance, profit };
 }
 
-// НОВОЕ: Рефералка
 export function claimReferral(telegramId: number, referrerId: number) {
   const user = getUserStmt.get(telegramId);
   if (!user || user.referrer_id !== null || telegramId === referrerId) return;
@@ -218,7 +308,6 @@ export function claimReferral(telegramId: number, referrerId: number) {
   db.prepare(`UPDATE users SET balance = balance + ? WHERE telegram_id IN (?, ?)`).run(bonus, telegramId, referrerId);
 }
 
-// НОВОЕ: Заявка на вывод
 export function requestWithdrawal(telegramId: number, amount: number) {
   const user = getUserStmt.get(telegramId);
   if (!user) throw new GameError('USER_NOT_FOUND', 404);

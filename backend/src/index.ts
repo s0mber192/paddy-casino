@@ -60,7 +60,6 @@ app.get('/health', async () => ({ ok: true }));
 app.get('/api/me', async (req) => {
   const u = upsertUser(req.tgUser);
   
-  // Обработка рефералки (если пришел start_param)
   const startParam = (req.query as any).start_param || ''; 
   if (startParam.startsWith('ref_')) {
     const referrerId = Number(startParam.replace('ref_', ''));
@@ -99,11 +98,15 @@ app.post<{ Body: { bet: number } }>('/api/upgrade/mystery', async (req) => {
   return mysteryUpgrade(req.tgUser.id, req.body.bet);
 });
 
-// НОВОЕ: Роут для вывода
 app.post<{ Body: { amount: number } }>('/api/withdraw', async (req) => {
   upsertUser(req.tgUser);
   requestWithdrawal(req.tgUser.id, req.body.amount);
   return { success: true };
+});
+
+// ЗАГЛУШКА ДЛЯ ЗВЕЗД
+app.post<{ Body: { caseId: number } }>('/api/case/open-stars', async () => {
+  throw new GameError('STARS_NOT_SUPPORTED_YET', 400);
 });
 
 await app.register(giftsRoutes);

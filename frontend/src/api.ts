@@ -7,7 +7,15 @@ export class ApiError extends Error {
 }
 
 export interface UserDto { id: number; username: string | null; firstName: string; balance: number; totalClicks: number; }
-export interface CaseDto { id: number; name: string; price: number; rewards: number[] }
+export interface CaseDto { 
+  id: number; 
+  name: string; 
+  price_coins: number; 
+  price_stars: number; 
+  currency: string; 
+  image_url: string; 
+  rewards: number[]; 
+}
 export interface MeResponse { user: UserDto; cases: CaseDto[]; config: { coinsPerClick: number }; }
 export interface ClickResponse { balance: number; totalClicks: number; earned: number }
 export interface CaseOpenResponse { reward: number; price: number; balance: number }
@@ -40,6 +48,7 @@ export const api = {
   me: (startParam?: string) => request<MeResponse>(`/api/me${startParam ? `?start_param=${startParam}` : ''}`, 'GET'),
   click: () => request<ClickResponse>('/api/click', 'POST'),
   openCase: (caseId: number) => request<CaseOpenResponse>('/api/case/open', 'POST', { caseId }),
+  openCaseStars: (caseId: number) => request<CaseOpenResponse>('/api/case/open-stars', 'POST', { caseId }),
   spinWheel: () => request<WheelResponse>('/api/wheel/spin', 'POST'),
   standardUpgrade: (bet: number, target: number) => request<StandardUpgradeResponse>('/api/upgrade/standard', 'POST', { bet, target }),
   mysteryUpgrade: (bet: number) => request<MysteryUpgradeResponse>('/api/upgrade/mystery', 'POST', { bet }),
