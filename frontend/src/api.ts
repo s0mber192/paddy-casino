@@ -9,6 +9,7 @@ export class ApiError extends Error {
 export interface UserDto { id: number; username: string | null; firstName: string; balance: number; totalClicks: number; }
 export interface CaseDto { 
   id: number; 
+  slug: string;
   name: string; 
   price_coins: number; 
   price_stars: number; 
