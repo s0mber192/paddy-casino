@@ -14,7 +14,7 @@ export interface CaseDto {
   price_coins: number; 
   price_stars: number; 
   currency: string; 
-  image_url: string; 
+  animation_url: string; 
   rewards: number[]; 
 }
 export interface MeResponse { user: UserDto; cases: CaseDto[]; config: { coinsPerClick: number }; }

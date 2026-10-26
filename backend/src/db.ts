@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS cases (
   price_coins INTEGER DEFAULT 0,
   price_stars INTEGER DEFAULT 0,
   currency TEXT DEFAULT 'coins',
-  image_url TEXT,
+  animation_url TEXT,
   loot  TEXT NOT NULL
 );
 
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 );
 `);
 
-// Сначала удаляем старые кейсы, чтобы обновить структуру и шансы
+// Пересоздаем кейсы
 db.exec(`DROP TABLE IF EXISTS case_openings;`);
 db.exec(`DROP TABLE IF EXISTS cases;`);
 
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS cases (
   price_coins INTEGER DEFAULT 0,
   price_stars INTEGER DEFAULT 0,
   currency TEXT DEFAULT 'coins',
-  image_url TEXT,
+  animation_url TEXT,
   loot  TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS case_openings (
@@ -85,7 +85,7 @@ const seedLoot = [
     price_coins: 1000,
     price_stars: 0,
     currency: 'coins',
-    image_url: '/api/gifts/image/13',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-13.json?v=1', // Loot Bag
     loot: [
       { reward: 200, weight: 5000 },
       { reward: 500, weight: 2500 },
@@ -101,7 +101,7 @@ const seedLoot = [
     price_coins: 10000,
     price_stars: 0,
     currency: 'coins',
-    image_url: '/api/gifts/image/164',
+    animation_url: 'https://proxy-cdn.virusgift.pro/heartlocket.json?v=1', // Heart Locket
     loot: [
       { reward: 2000, weight: 5000 },
       { reward: 5000, weight: 3000 },
@@ -112,12 +112,12 @@ const seedLoot = [
     ],
   },
   {
-    slug: 'epic_gift',
-    name: 'Epic Gift',
+    slug: 'heart',
+    name: 'Heart',
     price_coins: 0,
     price_stars: 2,
     currency: 'stars',
-    image_url: '/api/gifts/image/199',
+    animation_url: 'https://proxy-cdn.virusgift.pro/heartlocket.json?v=1',
     loot: [
       { reward: 5000, weight: 5000 },
       { reward: 10000, weight: 2500 },
@@ -128,19 +128,67 @@ const seedLoot = [
     ],
   },
   {
+    slug: 'arm',
+    name: 'Arm',
+    price_coins: 0,
+    price_stars: 2,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/MightyArm.json?v=1',
+    loot: [
+      { reward: 5000, weight: 5000 },
+      { reward: 10000, weight: 2500 },
+      { reward: 50000, weight: 1500 },
+      { reward: 100000, weight: 700 },
+      { reward: 500000, weight: 250 },
+      { reward: 2000000, weight: 50 },
+    ],
+  },
+  {
+    slug: 'oscar',
+    name: 'Oscar',
+    price_coins: 0,
+    price_stars: 2.5,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-62.json?v=1',
+    loot: [
+      { reward: 10000, weight: 5000 },
+      { reward: 20000, weight: 2500 },
+      { reward: 100000, weight: 1500 },
+      { reward: 500000, weight: 700 },
+      { reward: 1000000, weight: 250 },
+      { reward: 5000000, weight: 50 },
+    ],
+  },
+  {
+    slug: 'perfume',
+    name: 'Perfume',
+    price_coins: 0,
+    price_stars: 2.5,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-64.json?v=1',
+    loot: [
+      { reward: 10000, weight: 5000 },
+      { reward: 20000, weight: 2500 },
+      { reward: 100000, weight: 1500 },
+      { reward: 500000, weight: 700 },
+      { reward: 1000000, weight: 250 },
+      { reward: 5000000, weight: 50 },
+    ],
+  },
+  {
     slug: 'movie',
     name: 'Movie',
     price_coins: 0,
     price_stars: 4,
     currency: 'stars',
-    image_url: '/api/gifts/image/47',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-47.json?v=1',
     loot: [
-      { reward: 10000, weight: 5000 },
+      { reward: 20000, weight: 5000 },
       { reward: 50000, weight: 3000 },
-      { reward: 100000, weight: 1000 },
+      { reward: 200000, weight: 1000 },
       { reward: 500000, weight: 700 },
-      { reward: 1000000, weight: 250 },
-      { reward: 5000000, weight: 50 },
+      { reward: 2000000, weight: 250 },
+      { reward: 10000000, weight: 50 },
     ],
   },
   {
@@ -149,22 +197,86 @@ const seedLoot = [
     price_coins: 0,
     price_stars: 6,
     currency: 'stars',
-    image_url: '/api/gifts/image/45',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-45.json?v=1',
     loot: [
-      { reward: 20000, weight: 5000 },
+      { reward: 30000, weight: 5000 },
       { reward: 100000, weight: 3000 },
       { reward: 500000, weight: 1000 },
       { reward: 1000000, weight: 700 },
       { reward: 5000000, weight: 250 },
-      { reward: 10000000, weight: 50 },
+      { reward: 20000000, weight: 50 },
+    ],
+  },
+  {
+    slug: 'telegram',
+    name: 'Telegram',
+    price_coins: 0,
+    price_stars: 5,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-76.json?v=1',
+    loot: [
+      { reward: 25000, weight: 5000 },
+      { reward: 100000, weight: 3000 },
+      { reward: 500000, weight: 1000 },
+      { reward: 2000000, weight: 700 },
+      { reward: 10000000, weight: 250 },
+      { reward: 50000000, weight: 50 },
+    ],
+  },
+  {
+    slug: '18_plus',
+    name: '18+',
+    price_coins: 0,
+    price_stars: 7,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-58.json?v=1',
+    loot: [
+      { reward: 50000, weight: 5000 },
+      { reward: 200000, weight: 3000 },
+      { reward: 1000000, weight: 1000 },
+      { reward: 5000000, weight: 700 },
+      { reward: 10000000, weight: 250 },
+      { reward: 50000000, weight: 50 },
+    ],
+  },
+  {
+    slug: 'money',
+    name: 'Money',
+    price_coins: 0,
+    price_stars: 8,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/moneypot.json?v=1',
+    loot: [
+      { reward: 50000, weight: 5000 },
+      { reward: 500000, weight: 3000 },
+      { reward: 2000000, weight: 1000 },
+      { reward: 5000000, weight: 700 },
+      { reward: 20000000, weight: 250 },
+      { reward: 100000000, weight: 50 },
+    ],
+  },
+  {
+    slug: 'pepe',
+    name: 'Pepe',
+    price_coins: 0,
+    price_stars: 15,
+    currency: 'stars',
+    animation_url: 'https://proxy-cdn.virusgift.pro/telegram-gift-sticker-57.json?v=1',
+    loot: [
+      { reward: 100000, weight: 5000 },
+      { reward: 1000000, weight: 3000 },
+      { reward: 5000000, weight: 1000 },
+      { reward: 20000000, weight: 700 },
+      { reward: 100000000, weight: 250 },
+      { reward: 500000000, weight: 50 },
     ],
   },
 ];
 
 for (const c of seedLoot) {
   db.prepare(
-    `INSERT INTO cases (slug, name, price_coins, price_stars, currency, image_url, loot) VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(c.slug, c.name, c.price_coins, c.price_stars, c.currency, c.image_url, JSON.stringify(c.loot));
+    `INSERT INTO cases (slug, name, price_coins, price_stars, currency, animation_url, loot) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(c.slug, c.name, c.price_coins, c.price_stars, c.currency, c.animation_url, JSON.stringify(c.loot));
 }
 
 export interface UserRow {
@@ -178,7 +290,7 @@ export interface UserRow {
   referrer_id: number | null;
   created_at: number;
 }
-interface CaseRow { id: number; slug: string; name: string; price_coins: number; price_stars: number; currency: string; image_url: string; loot: string; }
+interface CaseRow { id: number; slug: string; name: string; price_coins: number; price_stars: number; currency: string; animation_url: string; loot: string; }
 interface LootItem { reward: number; weight: number }
 
 export class GameError extends Error {
@@ -206,14 +318,15 @@ export function upsertUser(u: TgUser): UserRow {
 }
 
 export function listCases() {
-  const rows = db.prepare<[], CaseRow>(`SELECT * FROM cases ORDER BY price_coins ASC`).all();
+  const rows = db.prepare<[], CaseRow>(`SELECT * FROM cases ORDER BY price_coins ASC, price_stars ASC`).all();
   return rows.map((c) => ({
     id: c.id,
+    slug: c.slug,
     name: c.name,
     price_coins: c.price_coins,
     price_stars: c.price_stars,
     currency: c.currency,
-    image_url: c.image_url,
+    animation_url: c.animation_url,
     rewards: (JSON.parse(c.loot) as LootItem[]).map((l) => l.reward),
   }));
 }

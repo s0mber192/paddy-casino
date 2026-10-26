@@ -22,7 +22,6 @@ export default function App() {
   const [prize, setPrize] = useState<{ reward: number; price: number } | null>(null);
   const popId = useRef(0);
 
-  // Стейты для модалки кейсов
   const [caseRolling, setCaseRolling] = useState(false);
   const [showCaseModal, setShowCaseModal] = useState(false);
   const [openingCase, setOpeningCase] = useState<CaseDto | null>(null);
@@ -73,7 +72,6 @@ export default function App() {
     api.click().then((r) => setUser((u) => (u && r.totalClicks >= u.totalClicks ? { ...u, balance: r.balance, totalClicks: r.totalClicks } : u))).catch(() => {});
   }, [user, coinsPerClick]);
 
-  // ОТКРЫТИЕ КЕЙСА
   const onOpenCase = async (c: CaseDto) => {
     if (caseRolling || !user || user.balance < c.price_coins) return;
     
@@ -83,32 +81,24 @@ export default function App() {
     setCaseResult(null);
     haptic('medium');
     
-    // Списываем сразу
     setUser((u) => (u ? { ...u, balance: u.balance - c.price_coins } : u));
 
     try {
       const r = await api.openCase(c.id);
       setCaseResult(r.reward);
 
-      // Генерируем ленту: 45 рандомных + выигрыш на 45-й позиции
       const prizes = c.rewards;
       const strip = Array.from({ length: 50 }, () => prizes[Math.floor(Math.random() * prizes.length)]);
       strip[45] = r.reward;
       
       setCaseStrip(strip);
       
-      // Ставим смещение так, чтобы 45-й элемент был ровно по центру
-      // 80px ширина элемента (70 + 10 gap). 45 * 80 = 3600
-      // Центр экрана - 50vw. Нам нужно сдвинуть ленту так, чтобы 45-й элемент оказался в центре.
-      // Формула: -(index * 80) + (50vw - 40) (40 это половина ширины карточки)
-      // Для простоты просто используем 50vw
       setTimeout(() => {
         setCaseOffset(window.innerWidth / 2 - 40 - 45 * 80);
       }, 50);
 
       setTimeout(() => {
         setCaseRolling(false);
-        // Синхронизируем баланс с сервером
         api.me().then(res => setUser(res.user)).catch(console.error);
       }, 12000);
 
@@ -216,18 +206,6 @@ export default function App() {
   const targetPrice = selectedGift ? selectedGift.price_stars : 0;
   const chancePercent = targetPrice > 0 ? Math.min(95, Math.floor((upgradeBet / targetPrice) * 100)) : 0;
 
-  // Вспомогательная функция для иконок кейсов
-  const getCaseIcon = (slug: string) => {
-    switch (slug) {
-      case 'starter': return '🎁';
-      case 'premium': return '💎';
-      case 'epic_gift': return '🏆';
-      case 'movie': return '🎬';
-      case 'space': return '🚀';
-      default: return '📦';
-    }
-  };
-
   return (
     <div className="screen" style={{ paddingBottom: '70px' }}>
       <header className="top">
@@ -235,17 +213,14 @@ export default function App() {
         <span className="who">{user.firstName} | {user.balance.toLocaleString('ru-RU')} 🪙</span>
       </header>
 
-      {/* --- МОДАЛКА ДЛЯ КЕЙСОВ --- */}
       {showCaseModal && openingCase && (
         <div className="modal" style={{ zIndex: 10000, background: 'rgba(0,0,0,0.95)' }}>
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <h2 style={{ color: 'var(--win)', marginBottom: '20px' }}>Открываем {openingCase.name}</h2>
             
             <div style={{ width: '100%', height: '120px', background: '#0a0a0c', border: '2px solid var(--win)', borderRadius: '16px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
-              {/* Центральная линия */}
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '4px', background: 'var(--win)', zIndex: 10, transform: 'translateX(-50%)', boxShadow: '0 0 15px var(--win)' }} />
               
-              {/* Лента */}
               <div 
                 style={{ 
                   display: 'flex',
@@ -259,8 +234,8 @@ export default function App() {
                   <div key={i} style={{ 
                     width: '70px', 
                     height: '90px', 
-                    background: 'var(--card)', 
-                    border: '1px solid var(--line)', 
+                    background: 'linear-gradient(180deg, #1a1a1f 0%, #0a0a0c 100%)', 
+                    border: '1px solid rgba(255, 26, 26, 0.3)', 
                     borderRadius: '8px', 
                     display: 'flex', 
                     flexDirection: 'column',
@@ -268,9 +243,12 @@ export default function App() {
                     justifyContent: 'center', 
                     flexShrink: 0,
                     fontSize: '12px',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    color: 'var(--win)',
+                    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.8)'
                   }}>
-                    {reward.toLocaleString('ru-RU')} 🪙
+                    <span style={{ fontSize: '20px', marginBottom: '5px' }}>🪙</span>
+                    {reward.toLocaleString('ru-RU')}
                   </div>
                 ))}
               </div>
@@ -279,12 +257,12 @@ export default function App() {
             {!caseRolling && caseResult !== null && (
               <div style={{ marginTop: '30px', textAlign: 'center', animation: 'fadeIn 0.5s' }}>
                 <h3 style={{ color: 'var(--muted)' }}>Вы выиграли:</h3>
-                <div style={{ fontSize: '48px', fontWeight: 'bold', color: 'var(--win)', margin: '10px 0' }}>
+                <div style={{ fontSize: '48px', fontWeight: 'bold', color: 'var(--win)', margin: '10px 0', textShadow: '0 0 20px var(--win)' }}>
                   {caseResult.toLocaleString('ru-RU')} 🪙
                 </div>
                 <button 
                   className="btn" 
-                  style={{ padding: '15px 40px', fontSize: '16px' }} 
+                  style={{ padding: '15px 40px', fontSize: '16px', marginTop: '20px' }} 
                   onClick={() => {
                     setShowCaseModal(false);
                     setOpeningCase(null);
@@ -442,18 +420,9 @@ export default function App() {
                           position: 'relative'
                         }}
                       >
-                        <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', fontSize: '64px' }}>
-                          {/* Если есть картинка, показываем её, если нет - эмодзи */}
-                          {c.image_url && !c.image_url.includes('undefined') ? (
-                             <img 
-                               src={c.image_url} 
-                               alt={c.name} 
-                               style={{ width: '80px', height: '80px', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} 
-                               onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = getCaseIcon(c.slug || ''); }}
-                             />
-                          ) : (
-                             getCaseIcon(c.slug || '')
-                          )}
+                        <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                          {/* ИСПОЛЬЗУЕМ LOTTIE АНИМАЦИЮ ДЛЯ КЕЙСОВ */}
+                          <LottiePlayer url={c.animation_url} style={{ width: '100%', height: '100%' }} />
                         </div>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>{c.name}</div>
                         <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>
