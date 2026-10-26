@@ -23,6 +23,9 @@ export default function App() {
   const popId = useRef(0);
 
   const [caseRolling, setCaseRolling] = useState(false);
+  const [caseStrip, setCaseStrip] = useState<number[]>([]);
+  const [caseOffset, setCaseOffset] = useState(0);
+  
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
 
@@ -69,14 +72,35 @@ export default function App() {
   const onOpenCase = async (c: CaseDto) => {
     if (caseRolling || !user || user.balance < c.price_coins) return;
     setCaseRolling(true); haptic('medium');
+    
+    // СПИСЫВАЕМ СРАЗУ
+    setUser((u) => (u ? { ...u, balance: u.balance - c.price_coins } : u));
+
     try {
       const r = await api.openCase(c.id);
+      
+      // Генерируем ленту из реальных призов этого кейса
+      const prizes = c.rewards;
+      const strip = Array.from({ length: 50 }, () => prizes[Math.floor(Math.random() * prizes.length)]);
+      
+      // На 45-й позиции ставим выигрыш (чтобы анимация остановилась на нем)
+      strip[45] = r.reward;
+      
+      setCaseStrip(strip);
+      setCaseOffset(45 * 80); // 80px = ширина карточки (70) + отступ (10)
+      
       setTimeout(() => {
-        setUser((u) => (u ? { ...u, balance: r.balance } : u));
-        setPrize({ reward: r.reward, price: r.price });
+        // Синхронизируем баланс с сервером
+        api.me().then(res => setUser(res.user)).catch(console.error);
+        setPrize({ reward: r.reward, price: c.price_coins });
         setCaseRolling(false);
+        setCaseStrip([]);
+        setCaseOffset(0);
       }, 12000);
-    } catch { setCaseRolling(false); }
+    } catch { 
+      setCaseRolling(false); 
+      api.me().then(res => setUser(res.user)).catch(console.error);
+    }
   };
 
   const onStandardUpgrade = async (bet: number, target: number) => {
@@ -302,17 +326,24 @@ export default function App() {
               {activeGame === 'cases' && (
                 <div className="game-content">
                   <h2 style={{ textAlign: 'center', color: 'var(--win)', marginBottom: '20px' }}>Кейсы</h2>
-                  {caseRolling && (
+                  
+                  {caseRolling && caseStrip.length > 0 && (
                     <div style={{ width: '100%', height: '80px', background: '#0a0a0c', border: '1px solid var(--win)', borderRadius: '12px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                       <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '2px', background: 'var(--win)', zIndex: 10 }} />
-                      <div className="case-strip">
-                        {[...Array(150)].map((_, i) => (
-                          <div key={i} className="case-strip-item">{[20, 50, 100, 200, 500, 2000][Math.floor(Math.random() * 6)]} 🪙</div>
+                      <div 
+                        className="case-strip"
+                        style={{ 
+                          transform: `translateX(-${caseOffset}px)`,
+                          transition: 'transform 12s cubic-bezier(0.1, 0.9, 0.2, 1)'
+                        }}
+                      >
+                        {caseStrip.map((reward, i) => (
+                          <div key={i} className="case-strip-item">{reward.toLocaleString('ru-RU')} 🪙</div>
                         ))}
                       </div>
                     </div>
                   )}
-                  
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {cases.map((c) => (
                       <div 
@@ -339,7 +370,7 @@ export default function App() {
                         </div>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>{c.name}</div>
                         <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>
-                          {c.currency === 'coins' ? `${c.price_coins} 🪙` : `${c.price_stars} ⭐`}
+                          {c.currency === 'coins' ? `${c.price_coins.toLocaleString('ru-RU')} 🪙` : `${c.price_stars} ⭐`}
                         </div>
                         <button 
                           className="btn" 

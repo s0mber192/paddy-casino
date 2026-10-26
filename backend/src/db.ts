@@ -53,57 +53,78 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 );
 `);
 
-// НОВЫЕ КЕЙСЫ
+// Сначала удаляем старые кейсы, чтобы обновить структуру и шансы
+db.exec(`DROP TABLE IF EXISTS case_openings;`);
+db.exec(`DROP TABLE IF EXISTS cases;`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS cases (
+  id    INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug  TEXT NOT NULL UNIQUE,
+  name  TEXT NOT NULL,
+  price_coins INTEGER DEFAULT 0,
+  price_stars INTEGER DEFAULT 0,
+  currency TEXT DEFAULT 'coins',
+  image_url TEXT,
+  loot  TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS case_openings (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  telegram_id INTEGER NOT NULL REFERENCES users(telegram_id),
+  case_id     INTEGER NOT NULL REFERENCES cases(id),
+  price       INTEGER NOT NULL,
+  reward      TEXT NOT NULL,
+  created_at  INTEGER NOT NULL
+);
+`);
+
 const seedLoot = [
-  // Starter (1000 коинов) - только коины
   {
     slug: 'starter',
     name: 'Starter',
     price_coins: 1000,
     price_stars: 0,
     currency: 'coins',
-    image_url: 'https://api.changes.tg/original/13',
+    image_url: '/api/gifts/image/13',
     loot: [
-      { reward: 200, weight: 40 },
-      { reward: 500, weight: 30 },
-      { reward: 1000, weight: 15 },
-      { reward: 2000, weight: 10 },
-      { reward: 5000, weight: 4 },
-      { reward: 20000, weight: 1 },
+      { reward: 200, weight: 5000 },
+      { reward: 500, weight: 2500 },
+      { reward: 1000, weight: 1500 },
+      { reward: 2000, weight: 700 },
+      { reward: 5000, weight: 250 },
+      { reward: 20000, weight: 50 },
     ],
   },
-  // Premium (10000 коинов) - подарки (медведь, сердечко, кубок, бутылка, алмаз, роза)
   {
     slug: 'premium',
     name: 'Premium',
     price_coins: 10000,
     price_stars: 0,
     currency: 'coins',
-    image_url: 'https://api.changes.tg/original/164',
+    image_url: '/api/gifts/image/164',
     loot: [
-      { reward: 1000, weight: 30 },
-      { reward: 5000, weight: 20 },
-      { reward: 10000, weight: 15 },
-      { reward: 50000, weight: 10 },
-      { reward: 100000, weight: 5 },
-      { reward: 500000, weight: 1 },
+      { reward: 2000, weight: 5000 },
+      { reward: 5000, weight: 3000 },
+      { reward: 10000, weight: 1000 },
+      { reward: 20000, weight: 700 },
+      { reward: 50000, weight: 250 },
+      { reward: 500000, weight: 50 },
     ],
   },
-  // === КЕЙСЫ ЗА ЗВЕЗДЫ (ПОКА ЗАГЛУШКА) ===
   {
     slug: 'epic_gift',
     name: 'Epic Gift',
     price_coins: 0,
     price_stars: 2,
     currency: 'stars',
-    image_url: 'https://api.changes.tg/original/164',
+    image_url: '/api/gifts/image/199',
     loot: [
-      { reward: 5000, weight: 30 },
-      { reward: 10000, weight: 20 },
-      { reward: 50000, weight: 15 },
-      { reward: 100000, weight: 10 },
-      { reward: 500000, weight: 5 },
-      { reward: 2000000, weight: 1 },
+      { reward: 5000, weight: 5000 },
+      { reward: 10000, weight: 2500 },
+      { reward: 50000, weight: 1500 },
+      { reward: 100000, weight: 700 },
+      { reward: 500000, weight: 250 },
+      { reward: 2000000, weight: 50 },
     ],
   },
   {
@@ -112,14 +133,14 @@ const seedLoot = [
     price_coins: 0,
     price_stars: 4,
     currency: 'stars',
-    image_url: 'https://api.changes.tg/original/47',
+    image_url: '/api/gifts/image/47',
     loot: [
-      { reward: 10000, weight: 30 },
-      { reward: 50000, weight: 20 },
-      { reward: 100000, weight: 15 },
-      { reward: 500000, weight: 10 },
-      { reward: 1000000, weight: 5 },
-      { reward: 5000000, weight: 1 },
+      { reward: 10000, weight: 5000 },
+      { reward: 50000, weight: 3000 },
+      { reward: 100000, weight: 1000 },
+      { reward: 500000, weight: 700 },
+      { reward: 1000000, weight: 250 },
+      { reward: 5000000, weight: 50 },
     ],
   },
   {
@@ -128,20 +149,18 @@ const seedLoot = [
     price_coins: 0,
     price_stars: 6,
     currency: 'stars',
-    image_url: 'https://api.changes.tg/original/45',
+    image_url: '/api/gifts/image/45',
     loot: [
-      { reward: 20000, weight: 30 },
-      { reward: 100000, weight: 20 },
-      { reward: 500000, weight: 15 },
-      { reward: 1000000, weight: 10 },
-      { reward: 5000000, weight: 5 },
-      { reward: 10000000, weight: 1 },
+      { reward: 20000, weight: 5000 },
+      { reward: 100000, weight: 3000 },
+      { reward: 500000, weight: 1000 },
+      { reward: 1000000, weight: 700 },
+      { reward: 5000000, weight: 250 },
+      { reward: 10000000, weight: 50 },
     ],
   },
 ];
 
-// Пересоздаем кейсы (удаляем старые и вставляем новые)
-db.exec(`DELETE FROM cases;`);
 for (const c of seedLoot) {
   db.prepare(
     `INSERT INTO cases (slug, name, price_coins, price_stars, currency, image_url, loot) VALUES (?, ?, ?, ?, ?, ?, ?)`
