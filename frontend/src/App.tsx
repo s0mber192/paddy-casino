@@ -29,6 +29,8 @@ export default function App() {
   const [caseOffset, setCaseOffset] = useState(0);
   const [caseResult, setCaseResult] = useState<number | null>(null);
   
+  const rouletteRef = useRef<HTMLDivElement>(null); // <-- РЕФ ДЛЯ ЗАМЕРА ШИРИНЫ
+
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
 
@@ -81,6 +83,7 @@ export default function App() {
     setCaseResult(null);
     haptic('medium');
     
+    // Списываем сразу
     setUser((u) => (u ? { ...u, balance: u.balance - c.price_coins } : u));
 
     try {
@@ -89,12 +92,28 @@ export default function App() {
 
       const prizes = c.rewards;
       const strip = Array.from({ length: 50 }, () => prizes[Math.floor(Math.random() * prizes.length)]);
-      strip[45] = r.reward;
+      
+      // Индекс выигрыша (45-й элемент, чтобы анимация длилась дольше)
+      const winIndex = 45;
+      strip[winIndex] = r.reward;
       
       setCaseStrip(strip);
       
+      // Ждем 50мс, чтобы DOM отрисовался и мы могли замерить ширину контейнера
       setTimeout(() => {
-        setCaseOffset(window.innerWidth / 2 - 40 - 45 * 80);
+        if (!rouletteRef.current) return;
+        
+        const containerWidth = rouletteRef.current.clientWidth;
+        const itemWidth = 80; // 70px + 10px gap
+        const itemCenter = 35; // Половина ширины карточки (70/2)
+        
+        // Центр выигрышного элемента от начала ленты
+        const targetCenter = (winIndex * itemWidth) + itemCenter;
+        
+        // Сдвиг: Центр контейнера минус центр выигрышного элемента
+        const finalOffset = (containerWidth / 2) - targetCenter;
+        
+        setCaseOffset(finalOffset);
       }, 50);
 
       setTimeout(() => {
@@ -218,7 +237,10 @@ export default function App() {
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <h2 style={{ color: 'var(--win)', marginBottom: '20px' }}>Открываем {openingCase.name}</h2>
             
-            <div style={{ width: '100%', height: '120px', background: '#0a0a0c', border: '2px solid var(--win)', borderRadius: '16px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div 
+              ref={rouletteRef}
+              style={{ width: '100%', height: '120px', background: '#0a0a0c', border: '2px solid var(--win)', borderRadius: '16px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}
+            >
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '4px', background: 'var(--win)', zIndex: 10, transform: 'translateX(-50%)', boxShadow: '0 0 15px var(--win)' }} />
               
               <div 
@@ -283,6 +305,7 @@ export default function App() {
         </div>
       )}
 
+      {/* ... ОСТАЛЬНОЙ ИНТЕРФЕЙС (КЛИКЕР, ИГРЫ, ПРОФИЛЬ) ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ ... */}
       {activeTab === 'main' && (
         <div className="tab-content center" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <section className="balance">
@@ -421,8 +444,12 @@ export default function App() {
                         }}
                       >
                         <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                          {/* ИСПОЛЬЗУЕМ LOTTIE АНИМАЦИЮ ДЛЯ КЕЙСОВ */}
-                          <LottiePlayer url={c.animation_url} style={{ width: '100%', height: '100%' }} />
+                          <img 
+                            src={c.image_url} 
+                            alt={c.name} 
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} 
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
                         </div>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>{c.name}</div>
                         <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>

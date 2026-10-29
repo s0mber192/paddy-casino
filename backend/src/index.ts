@@ -104,21 +104,20 @@ app.post<{ Body: { amount: number } }>('/api/withdraw', async (req) => {
   return { success: true };
 });
 
-// ЗАГЛУШКА ДЛЯ ЗВЕЗД
-app.post<{ Body: { caseId: number } }>('/api/case/open-stars', async () => {
-  throw new GameError('STARS_NOT_SUPPORTED_YET', 400);
-});
-
 await app.register(giftsRoutes);
 
+// ЖЕСТКИЙ ПУТЬ ДЛЯ DOCKER
 await app.register(fastifyStatic, {
-  root: path.join(process.cwd(), '../frontend/dist'),
+  root: '/app/frontend/dist', 
   prefix: '/',
 });
 
 app.setNotFoundHandler((req, reply) => {
-  if (req.raw.url?.startsWith('/api')) reply.code(404).send({ error: 'NOT_FOUND' });
-  else reply.sendFile('index.html');
+  if (req.raw.url?.startsWith('/api')) {
+    reply.code(404).send({ error: 'NOT_FOUND' });
+  } else {
+    reply.sendFile('index.html');
+  }
 });
 
 app.listen({ port: PORT, host: HOST }).catch((e) => {

@@ -7,6 +7,8 @@ export class ApiError extends Error {
 }
 
 export interface UserDto { id: number; username: string | null; firstName: string; balance: number; totalClicks: number; }
+
+// ВОТ ТУТ МЫ ДОБАВИЛИ image_url и убрали animation_url
 export interface CaseDto { 
   id: number; 
   slug: string;
@@ -14,9 +16,10 @@ export interface CaseDto {
   price_coins: number; 
   price_stars: number; 
   currency: string; 
-  animation_url: string; 
+  image_url: string; 
   rewards: number[]; 
 }
+
 export interface MeResponse { user: UserDto; cases: CaseDto[]; config: { coinsPerClick: number }; }
 export interface ClickResponse { balance: number; totalClicks: number; earned: number }
 export interface CaseOpenResponse { reward: number; price: number; balance: number }
