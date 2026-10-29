@@ -423,7 +423,7 @@ export default function App() {
                 </div>
               )}
 
-              {activeGame === 'cases' && (
+                            {activeGame === 'cases' && (
                 <div className="game-content">
                   <h2 style={{ textAlign: 'center', color: 'var(--win)', marginBottom: '20px' }}>Кейсы</h2>
                   
@@ -438,41 +438,63 @@ export default function App() {
                           overflow: 'hidden',
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '10px',
-                          position: 'relative'
+                          position: 'relative',
+                          height: '220px', // Фиксированная высота карточки
                         }}
                       >
-                        <div style={{ width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                        {/* КАРТИНКА НА ФОНЕ */}
+                        <div style={{ 
+                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          zIndex: 1
+                        }}>
                           <img 
                             src={c.image_url} 
                             alt={c.name} 
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} 
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'cover', // Растягиваем на всю карточку
+                              opacity: 0.7 // Делаем чуть прозрачной, чтобы текст читался
+                            }} 
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           />
                         </div>
-                        <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '5px', textAlign: 'center' }}>{c.name}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '10px' }}>
-                          {c.currency === 'coins' ? `${c.price_coins.toLocaleString('ru-RU')} 🪙` : `${c.price_stars} ⭐`}
-                        </div>
-                        <button 
-                          className="btn" 
-                          style={{ width: '100%', padding: '10px', fontSize: '13px' }}
-                          disabled={
-                            (c.currency === 'coins' && user.balance < c.price_coins) ||
-                            (c.currency === 'stars') ||
-                            caseRolling
-                          }
-                          onClick={() => {
-                            if (c.currency === 'coins') {
-                              onOpenCase(c);
-                            } else {
-                              alert('Покупка за звезды скоро появится!');
+                        
+                        {/* ТЕКСТ И КНОПКА СНИЗУ */}
+                        <div style={{ 
+                          position: 'relative', 
+                          zIndex: 2, 
+                          marginTop: 'auto', // Прижимаем к низу
+                          padding: '10px', 
+                          background: 'rgba(0,0,0,0.7)', // Темная подложка
+                          backdropFilter: 'blur(5px)',
+                          borderTop: '1px solid rgba(255,255,255,0.1)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center'
+                        }}>
+                          <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px', textAlign: 'center' }}>{c.name}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>
+                            {c.currency === 'coins' ? `${c.price_coins.toLocaleString('ru-RU')} 🪙` : `${c.price_stars} ⭐`}
+                          </div>
+                          <button 
+                            className="btn" 
+                            style={{ width: '100%', padding: '8px', fontSize: '12px' }}
+                            disabled={
+                              (c.currency === 'coins' && user.balance < c.price_coins) ||
+                              (c.currency === 'stars') ||
+                              caseRolling
                             }
-                          }}
-                        >
-                          {c.currency === 'stars' ? 'Скоро' : `Открыть`}
-                        </button>
+                            onClick={() => {
+                              if (c.currency === 'coins') {
+                                onOpenCase(c);
+                              } else {
+                                alert('Покупка за звезды скоро появится!');
+                              }
+                            }}
+                          >
+                            {c.currency === 'stars' ? 'Скоро' : `Открыть`}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
