@@ -51,7 +51,6 @@ export default function App() {
   
   const [withdrawAmount, setWithdrawAmount] = useState<number | ''>('');
 
-  // Рефералка
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
   const [copyText, setCopyText] = useState('Скопировать');
   const [claiming, setClaiming] = useState<number | null>(null);
@@ -97,7 +96,6 @@ export default function App() {
 
       const prizes = c.rewards;
       const strip = Array.from({ length: 50 }, () => prizes[Math.floor(Math.random() * prizes.length)]);
-      
       const winIndex = 45;
       strip[winIndex] = r.reward;
       
@@ -105,14 +103,11 @@ export default function App() {
       
       setTimeout(() => {
         if (!rouletteRef.current) return;
-        
         const containerWidth = rouletteRef.current.clientWidth;
         const itemWidth = 80;
         const itemCenter = 35;
-        
         const targetCenter = (winIndex * itemWidth) + itemCenter;
         const finalOffset = (containerWidth / 2) - targetCenter;
-        
         setCaseOffset(finalOffset);
       }, 50);
 
@@ -139,11 +134,9 @@ export default function App() {
       const r = await api.standardUpgrade(bet, target);
       const chanceDeg = (r.chancePercent / 100) * 360;
       let targetAngle = r.win ? Math.random() * chanceDeg : chanceDeg + Math.random() * (360 - chanceDeg);
-      
       const targetRotation = 360 - targetAngle;
       let delta = targetRotation - (upgradeWheelRotation % 360);
       if (delta < 0) delta += 360;
-
       setUpgradeWheelRotation(upgradeWheelRotation + (360 * 30) + delta);
 
       let resultData;
@@ -169,7 +162,6 @@ export default function App() {
   const onMysteryUpgrade = async () => {
     if (isMystery || !user || user.balance < mysteryBet) return;
     setIsMystery(true); haptic('heavy');
-    
     setUser((u) => (u ? { ...u, balance: u.balance - mysteryBet } : u));
 
     try {
@@ -255,7 +247,7 @@ export default function App() {
   return (
     <div className="screen" style={{ paddingBottom: '70px' }}>
       <header className="top">
-        <span className="logo">PADDY<b>CASINO</b></span>
+        <span className="logo">PADDY<b>GAME</b></span>
         <span className="who">{user.firstName} | {user.balance.toLocaleString('ru-RU')} 🪙</span>
       </header>
 
@@ -337,6 +329,7 @@ export default function App() {
           <section className="balance">
             <span className="label">Ваш Баланс</span>
             <span className="amount">{user.balance.toLocaleString('ru-RU')}</span>
+            <span className="sub">кликов: {user.totalClicks.toLocaleString('ru-RU')}</span>
           </section>
           <section className="tap-zone">
             <button className="tap" onPointerDown={onTap}>
@@ -596,11 +589,9 @@ export default function App() {
             <p style={{ color: 'var(--muted)', margin: '5px 0' }}>ID: {user.id}</p>
           </div>
 
-          {/* БЛОК РЕФЕРАЛКИ */}
           <div style={{ padding: '20px', background: 'var(--card)', borderRadius: '16px', border: '1px solid var(--line)' }}>
             <h3 style={{ margin: '0 0 15px 0', color: 'var(--win)', textAlign: 'center' }}>🎁 Приглашай друзей</h3>
             
-            {/* Счётчик */}
             <div style={{ textAlign: 'center', marginBottom: '15px' }}>
               <div style={{ fontSize: '42px', fontWeight: 'bold', color: 'var(--win)', textShadow: '0 0 20px var(--win)' }}>
                 {referralStats?.count || 0}
@@ -610,7 +601,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Ссылка */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
               <input 
                 type="text" 
@@ -629,7 +619,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Рубежи */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {referralStats?.milestones.map((m) => {
                 const progress = Math.min(100, ((referralStats.count || 0) / m.count) * 100);
@@ -689,7 +678,7 @@ export default function App() {
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>💸</div>
           <h2>Вывод средств</h2>
           <p style={{ color: 'var(--muted)', textAlign: 'center', marginBottom: '20px' }}>
-            Обменяйте монеты на Telegram Stars. <br/> Курс: 1000 🪙 = 10 ⭐
+            Обменяйте монеты на Telegram Stars. <br/> Курс: 1000 🪙 = 1 ⭐
           </p>
           
           <div style={{ width: '100%', padding: '20px', background: 'var(--card)', borderRadius: '16px' }}>
