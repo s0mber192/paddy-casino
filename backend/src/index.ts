@@ -4,7 +4,7 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'node:path';
 import { AuthError, validateInitData, type TgUser } from './auth.js';
-import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, claimReferral, requestWithdrawal } from './db.js';
+import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, claimReferral, requestWithdrawal, getReferralStats, claimReferralMilestone } from './db.js';
 import { giftsRoutes } from './gifts.js';
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -104,9 +104,19 @@ app.post<{ Body: { amount: number } }>('/api/withdraw', async (req) => {
   return { success: true };
 });
 
+// НОВЫЕ ЭНДПОИНТЫ РЕФЕРАЛКИ
+app.get('/api/referrals', async (req) => {
+  upsertUser(req.tgUser);
+  return getReferralStats(req.tgUser.id);
+});
+
+app.post<{ Body: { milestone: number } }>('/api/referrals/claim', async (req) => {
+  upsertUser(req.tgUser);
+  return claimReferralMilestone(req.tgUser.id, req.body.milestone);
+});
+
 await app.register(giftsRoutes);
 
-// ЖЕСТКИЙ ПУТЬ ДЛЯ DOCKER
 await app.register(fastifyStatic, {
   root: '/app/frontend/dist', 
   prefix: '/',

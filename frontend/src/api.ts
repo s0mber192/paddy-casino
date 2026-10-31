@@ -7,8 +7,6 @@ export class ApiError extends Error {
 }
 
 export interface UserDto { id: number; username: string | null; firstName: string; balance: number; totalClicks: number; }
-
-// ВОТ ТУТ МЫ ДОБАВИЛИ image_url и убрали animation_url
 export interface CaseDto { 
   id: number; 
   slug: string;
@@ -19,7 +17,6 @@ export interface CaseDto {
   image_url: string; 
   rewards: number[]; 
 }
-
 export interface MeResponse { user: UserDto; cases: CaseDto[]; config: { coinsPerClick: number }; }
 export interface ClickResponse { balance: number; totalClicks: number; earned: number }
 export interface CaseOpenResponse { reward: number; price: number; balance: number }
@@ -27,6 +24,17 @@ export interface WheelResponse { reward: number; balance: number }
 export interface StandardUpgradeResponse { win: boolean; newBalance: number; bet: number; target: number; chancePercent: number }
 export interface MysteryUpgradeResponse { winAmount: number; newBalance: number; profit: number }
 export interface GiftDto { id: string; name: string; price_stars: number; animation_url: string; }
+
+export interface ReferralMilestone {
+  count: number;
+  reward: number;
+  claimed: boolean;
+  available: boolean;
+}
+export interface ReferralStats {
+  count: number;
+  milestones: ReferralMilestone[];
+}
 
 function getInitData(): string {
   try { const raw = retrieveRawInitData(); if (raw) return raw; } catch {}
@@ -58,4 +66,6 @@ export const api = {
   mysteryUpgrade: (bet: number) => request<MysteryUpgradeResponse>('/api/upgrade/mystery', 'POST', { bet }),
   getGiftList: () => request<GiftDto[]>('/api/gifts/list', 'GET'),
   withdraw: (amount: number) => request<{ success: boolean }>('/api/withdraw', 'POST', { amount }),
+  getReferrals: () => request<ReferralStats>('/api/referrals', 'GET'),
+  claimReferral: (milestone: number) => request<{ success: boolean; reward: number; newBalance: number }>('/api/referrals/claim', 'POST', { milestone }),
 };

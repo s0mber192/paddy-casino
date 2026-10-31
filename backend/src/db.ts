@@ -31,9 +31,15 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   status      TEXT DEFAULT 'pending',
   created_at  INTEGER DEFAULT (strftime('%s','now'))
 );
+
+CREATE TABLE IF NOT EXISTS referral_claims (
+  telegram_id INTEGER NOT NULL,
+  milestone   INTEGER NOT NULL,
+  claimed_at  INTEGER NOT NULL,
+  PRIMARY KEY (telegram_id, milestone)
+);
 `);
 
-// Пересоздаем таблицы кейсов, чтобы обновить структуру и данные
 db.exec(`DROP TABLE IF EXISTS case_openings;`);
 db.exec(`DROP TABLE IF EXISTS cases;`);
 
@@ -152,6 +158,16 @@ export class GameError extends Error {
   }
 }
 
+// РУБЕЖИ РЕФЕРАЛЬНОЙ ПРОГРАММЫ
+const REFERRAL_MILESTONES = [
+  { count: 5, reward: 10000 },
+  { count: 10, reward: 25000 },
+  { count: 15, reward: 50000 },
+  { count: 20, reward: 100000 },
+  { count: 50, reward: 300000 },
+  { count: 100, reward: 1000000 },
+];
+
 const upsertStmt = db.prepare(`
   INSERT INTO users (telegram_id, username, first_name, created_at)
   VALUES (@id, @username, @first_name, @now)
@@ -235,7 +251,7 @@ export function spinWheel(telegramId: number) {
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
 
   const now = Date.now();
-  const cooldown = 10 * 1000; // 10 сек для теста
+  const cooldown = 10 * 1000;
 
   if (now - user.last_wheel_spin < cooldown) {
     throw new GameError('WHEEL_COOLDOWN', 429);
@@ -284,13 +300,51 @@ export function mysteryUpgrade(telegramId: number, bet: number) {
   return { winAmount, newBalance, profit };
 }
 
+// РЕФЕРАЛКА: приветственный бонус новому игроку
 export function claimReferral(telegramId: number, referrerId: number) {
   const user = getUserStmt.get(telegramId);
   if (!user || user.referrer_id !== null || telegramId === referrerId) return;
   
-  const bonus = 5000;
+  const welcomeBonus = 1000;
   db.prepare(`UPDATE users SET referrer_id = ? WHERE telegram_id = ?`).run(referrerId, telegramId);
-  db.prepare(`UPDATE users SET balance = balance + ? WHERE telegram_id IN (?, ?)`).run(bonus, telegramId, referrerId);
+  db.prepare(`UPDATE users SET balance = balance + ? WHERE telegram_id = ?`).run(welcomeBonus, telegramId);
+}
+
+// РЕФЕРАЛКА: статистика и рубежи
+export function getReferralStats(telegramId: number) {
+  const countRow = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE referrer_id = ?`).get(telegramId) as { cnt: number };
+  const claims = db.prepare(`SELECT milestone FROM referral_claims WHERE telegram_id = ?`).all(telegramId) as { milestone: number }[];
+  const claimedSet = new Set(claims.map(c => c.milestone));
+  
+  return {
+    count: countRow.cnt,
+    milestones: REFERRAL_MILESTONES.map(m => ({
+      count: m.count,
+      reward: m.reward,
+      claimed: claimedSet.has(m.count),
+      available: countRow.cnt >= m.count && !claimedSet.has(m.count),
+    }))
+  };
+}
+
+// РЕФЕРАЛКА: забрать награду за рубеж
+export function claimReferralMilestone(telegramId: number, milestone: number) {
+  const m = REFERRAL_MILESTONES.find(x => x.count === milestone);
+  if (!m) throw new GameError('INVALID_MILESTONE', 400);
+  
+  const user = getUserStmt.get(telegramId);
+  if (!user) throw new GameError('USER_NOT_FOUND', 404);
+  
+  const countRow = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE referrer_id = ?`).get(telegramId) as { cnt: number };
+  if (countRow.cnt < milestone) throw new GameError('NOT_ENOUGH_REFERRALS', 400);
+  
+  const existing = db.prepare(`SELECT 1 FROM referral_claims WHERE telegram_id = ? AND milestone = ?`).get(telegramId, milestone);
+  if (existing) throw new GameError('ALREADY_CLAIMED', 400);
+  
+  db.prepare(`INSERT INTO referral_claims (telegram_id, milestone, claimed_at) VALUES (?, ?, ?)`).run(telegramId, milestone, Date.now());
+  db.prepare(`UPDATE users SET balance = balance + ? WHERE telegram_id = ?`).run(m.reward, telegramId);
+  
+  return { success: true, reward: m.reward, newBalance: getUserStmt.get(telegramId)!.balance };
 }
 
 export function requestWithdrawal(telegramId: number, amount: number) {

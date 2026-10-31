@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError, hasInitData, type CaseDto, type UserDto, type GiftDto } from './api';
+import { api, ApiError, hasInitData, type CaseDto, type UserDto, type GiftDto, type ReferralStats } from './api';
 import LottiePlayer from './LottiePlayer';
 
 interface Pop { id: number; x: number; y: number; value: number }
@@ -29,7 +29,7 @@ export default function App() {
   const [caseOffset, setCaseOffset] = useState(0);
   const [caseResult, setCaseResult] = useState<number | null>(null);
   
-  const rouletteRef = useRef<HTMLDivElement>(null); // <-- РЕФ ДЛЯ ЗАМЕРА ШИРИНЫ
+  const rouletteRef = useRef<HTMLDivElement>(null);
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -51,6 +51,11 @@ export default function App() {
   
   const [withdrawAmount, setWithdrawAmount] = useState<number | ''>('');
 
+  // Рефералка
+  const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
+  const [copyText, setCopyText] = useState('Скопировать');
+  const [claiming, setClaiming] = useState<number | null>(null);
+
   useEffect(() => {
     if (!hasInitData()) return setError('Откройте внутри Telegram');
     
@@ -62,6 +67,7 @@ export default function App() {
     }).catch((e) => setError(e instanceof ApiError && e.status === 401 ? 'Ошибка авторизации' : 'Сервер недоступен'));
 
     api.getGiftList().then(list => setGiftList(list)).catch(console.error);
+    api.getReferrals().then(setReferralStats).catch(console.error);
   }, []);
 
   const onTap = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
@@ -83,7 +89,6 @@ export default function App() {
     setCaseResult(null);
     haptic('medium');
     
-    // Списываем сразу
     setUser((u) => (u ? { ...u, balance: u.balance - c.price_coins } : u));
 
     try {
@@ -93,24 +98,19 @@ export default function App() {
       const prizes = c.rewards;
       const strip = Array.from({ length: 50 }, () => prizes[Math.floor(Math.random() * prizes.length)]);
       
-      // Индекс выигрыша (45-й элемент, чтобы анимация длилась дольше)
       const winIndex = 45;
       strip[winIndex] = r.reward;
       
       setCaseStrip(strip);
       
-      // Ждем 50мс, чтобы DOM отрисовался и мы могли замерить ширину контейнера
       setTimeout(() => {
         if (!rouletteRef.current) return;
         
         const containerWidth = rouletteRef.current.clientWidth;
-        const itemWidth = 80; // 70px + 10px gap
-        const itemCenter = 35; // Половина ширины карточки (70/2)
+        const itemWidth = 80;
+        const itemCenter = 35;
         
-        // Центр выигрышного элемента от начала ленты
         const targetCenter = (winIndex * itemWidth) + itemCenter;
-        
-        // Сдвиг: Центр контейнера минус центр выигрышного элемента
         const finalOffset = (containerWidth / 2) - targetCenter;
         
         setCaseOffset(finalOffset);
@@ -210,6 +210,33 @@ export default function App() {
     }
   };
 
+  const onCopyLink = () => {
+    if (!user) return;
+    const refLink = `https://t.me/s0mber_Flop_bot/play?startapp=ref_${user.id}`;
+    navigator.clipboard.writeText(refLink).then(() => {
+      setCopyText('Скопировано!');
+      haptic('medium');
+      setTimeout(() => setCopyText('Скопировать'), 2000);
+    });
+  };
+
+  const onClaimMilestone = async (milestone: number) => {
+    if (!user || claiming) return;
+    setClaiming(milestone);
+    haptic('heavy');
+    try {
+      const r = await api.claimReferral(milestone);
+      setUser((u) => (u ? { ...u, balance: r.newBalance } : u));
+      setPrize({ reward: r.reward, price: 0 });
+      const stats = await api.getReferrals();
+      setReferralStats(stats);
+    } catch (e: any) {
+      alert(e.message === 'ALREADY_CLAIMED' ? 'Уже забрано' : 'Ошибка');
+    } finally {
+      setClaiming(null);
+    }
+  };
+
   const sortedGifts = [...giftList].sort((a, b) => {
     return sortOrder === 'asc' ? a.price_stars - b.price_stars : b.price_stars - a.price_stars;
   });
@@ -305,7 +332,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ... ОСТАЛЬНОЙ ИНТЕРФЕЙС (КЛИКЕР, ИГРЫ, ПРОФИЛЬ) ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ ... */}
       {activeTab === 'main' && (
         <div className="tab-content center" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <section className="balance">
@@ -423,7 +449,7 @@ export default function App() {
                 </div>
               )}
 
-                            {activeGame === 'cases' && (
+              {activeGame === 'cases' && (
                 <div className="game-content">
                   <h2 style={{ textAlign: 'center', color: 'var(--win)', marginBottom: '20px' }}>Кейсы</h2>
                   
@@ -439,10 +465,9 @@ export default function App() {
                           display: 'flex',
                           flexDirection: 'column',
                           position: 'relative',
-                          height: '220px', // Фиксированная высота карточки
+                          height: '220px',
                         }}
                       >
-                        {/* КАРТИНКА НА ФОНЕ */}
                         <div style={{ 
                           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -454,20 +479,19 @@ export default function App() {
                             style={{ 
                               width: '100%', 
                               height: '100%', 
-                              objectFit: 'cover', // Растягиваем на всю карточку
-                              opacity: 0.7 // Делаем чуть прозрачной, чтобы текст читался
+                              objectFit: 'cover',
+                              opacity: 0.7
                             }} 
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           />
                         </div>
                         
-                        {/* ТЕКСТ И КНОПКА СНИЗУ */}
                         <div style={{ 
                           position: 'relative', 
                           zIndex: 2, 
-                          marginTop: 'auto', // Прижимаем к низу
+                          marginTop: 'auto',
                           padding: '10px', 
-                          background: 'rgba(0,0,0,0.7)', // Темная подложка
+                          background: 'rgba(0,0,0,0.7)',
                           backdropFilter: 'blur(5px)',
                           borderTop: '1px solid rgba(255,255,255,0.1)',
                           display: 'flex', flexDirection: 'column', alignItems: 'center'
@@ -565,24 +589,97 @@ export default function App() {
       )}
 
       {activeTab === 'profile' && (
-        <div className="tab-content center" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '20px' }}>👤</div>
-          <h2>Привет, {user.firstName}!</h2>
-          <p style={{ color: 'var(--muted)' }}>ID: {user.id}</p>
-          
-          <div style={{ marginTop: '20px', padding: '20px', background: 'var(--card)', borderRadius: '16px', width: '100%', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0' }}>Пригласи друга</h3>
-            <p style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '15px' }}>Получите по 5000 🪙 за каждого друга!</p>
-            <button 
-              className="btn" 
-              style={{ width: '100%' }}
-              onClick={() => {
-                const refLink = `https://t.me/s0mber_Flop_bot/play?startapp=ref_${user.id}`;
-                (window as any).Telegram?.WebApp?.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}`);
-              }}
-            >
-              Пригласить
-            </button>
+        <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '64px', marginBottom: '10px' }}>👤</div>
+            <h2 style={{ margin: 0 }}>Привет, {user.firstName}!</h2>
+            <p style={{ color: 'var(--muted)', margin: '5px 0' }}>ID: {user.id}</p>
+          </div>
+
+          {/* БЛОК РЕФЕРАЛКИ */}
+          <div style={{ padding: '20px', background: 'var(--card)', borderRadius: '16px', border: '1px solid var(--line)' }}>
+            <h3 style={{ margin: '0 0 15px 0', color: 'var(--win)', textAlign: 'center' }}>🎁 Приглашай друзей</h3>
+            
+            {/* Счётчик */}
+            <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+              <div style={{ fontSize: '42px', fontWeight: 'bold', color: 'var(--win)', textShadow: '0 0 20px var(--win)' }}>
+                {referralStats?.count || 0}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                друзей приглашено
+              </div>
+            </div>
+
+            {/* Ссылка */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+              <input 
+                type="text" 
+                readOnly 
+                value={`t.me/s0mber_Flop_bot/play?startapp=ref_${user.id}`}
+                className="input"
+                style={{ fontSize: '11px', padding: '10px 8px' }}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <button 
+                className="btn" 
+                style={{ padding: '10px 15px', fontSize: '12px' }}
+                onClick={onCopyLink}
+              >
+                {copyText}
+              </button>
+            </div>
+
+            {/* Рубежи */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {referralStats?.milestones.map((m) => {
+                const progress = Math.min(100, ((referralStats.count || 0) / m.count) * 100);
+                return (
+                  <div 
+                    key={m.count}
+                    style={{ 
+                      padding: '12px', 
+                      background: m.claimed ? 'rgba(0, 255, 0, 0.05)' : m.available ? 'rgba(255, 26, 26, 0.1)' : 'var(--bg)',
+                      border: `1px solid ${m.claimed ? '#00aa00' : m.available ? 'var(--win)' : 'var(--line)'}`,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      opacity: m.claimed ? 0.6 : 1
+                    }}
+                  >
+                    <div style={{ fontSize: '24px' }}>
+                      {m.claimed ? '✅' : m.available ? '🎁' : '🔒'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                        {m.count} друзей
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                        Награда: <span style={{ color: 'var(--win)' }}>+{m.reward.toLocaleString('ru-RU')} 🪙</span>
+                      </div>
+                      {!m.claimed && !m.available && (
+                        <div style={{ height: '4px', background: 'var(--line)', borderRadius: '2px', marginTop: '5px', overflow: 'hidden' }}>
+                          <div style={{ width: `${progress}%`, height: '100%', background: 'var(--win)' }} />
+                        </div>
+                      )}
+                    </div>
+                    {m.available && (
+                      <button 
+                        className="btn" 
+                        style={{ padding: '8px 12px', fontSize: '11px' }}
+                        disabled={claiming === m.count}
+                        onClick={() => onClaimMilestone(m.count)}
+                      >
+                        {claiming === m.count ? '...' : 'Забрать'}
+                      </button>
+                    )}
+                    {m.claimed && (
+                      <span style={{ fontSize: '11px', color: '#00aa00' }}>Забрано</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
