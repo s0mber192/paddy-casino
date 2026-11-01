@@ -252,8 +252,8 @@ export default function App() {
       </header>
 
       {showCaseModal && openingCase && (
-        <div className="modal" style={{ zIndex: 10000, background: 'rgba(0,0,0,0.95)' }}>
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+       <div className="modal" style={{ zIndex: 10000, background: 'rgba(0,0,0,0.95)' }}>
+          <div style={{ width: '100%', maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <h2 style={{ color: 'var(--win)', marginBottom: '20px' }}>Открываем {openingCase.name}</h2>
             
             <div 
