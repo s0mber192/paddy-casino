@@ -30,7 +30,6 @@ WORKDIR /app
 COPY gift-service/requirements.txt gift-service/requirements.txt
 RUN pip install -r gift-service/requirements.txt
 COPY gift-service/ gift-service/
-RUN cd gift-service && python -c "from TelegramGifts import TelegramGifts; TelegramGifts()" || echo "WARN"
 
 COPY --from=backend /build/backend/dist backend/dist
 COPY --from=backend /build/backend/node_modules backend/node_modules
