@@ -9,7 +9,7 @@ const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'paddy-collection-'));
 process.env.DB_PATH = path.join(directory, 'test.db');
 process.env.BOT_TOKEN = 'test-only-not-a-real-token';
 process.env.APP_TEST = '1';
-process.env.STATIC_DIR = path.join(root, 'frontend/dist');
+process.env.STATIC_DIR = fs.existsSync(path.join(root,'frontend/public/gifts/59.json')) ? path.join(root,'frontend/public') : path.join(root,'frontend/dist');
 const {app} = await import('../dist/index.js');
 const {db} = await import('../dist/db.js');
 const {applyQuotes, catalogWithPrices} = await import('../dist/prices.js');
@@ -42,6 +42,9 @@ try {
     assert.equal(balance(),10000);
   }
   assert.equal((await request('/api/upgrade/standard',{bet:100,giftId:'missing'})).statusCode,400);
+  const art=await app.inject({method:'GET',url:'/api/gifts/animation/59?v=official-2'});
+  assert.equal(art.statusCode,200);
+  assert.ok(Array.isArray(art.json().layers));
   const quotes=catalogWithPrices();
   assert.ok(quotes.length>50);
   assert.ok(quotes.every(g=>g.price_source==='reference' && g.price_stale && g.price_updated_at===null));

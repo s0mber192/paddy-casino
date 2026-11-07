@@ -1,5 +1,7 @@
 import type {FastifyInstance} from 'fastify';
 import {gunzipSync} from 'node:zlib';
+import {readFile} from 'node:fs/promises';
+import path from 'node:path';
 import {GIFTS} from './catalog.js';
 import {catalogWithPrices} from './prices.js';
 
@@ -13,6 +15,17 @@ async function animationFor(id: string) {
   const task=(async()=>{
     const gift=GIFTS.find(g=>String(g.id)===id);
     if(!gift) throw new Error('Gift not found');
+    try {
+      const directory=process.env.STATIC_DIR ?? path.resolve('..','frontend','dist');
+      const text=await readFile(path.join(directory,'gifts',`${id}.json`),'utf8');
+      const data=JSON.parse(text);
+      if(!Array.isArray(data.layers)) throw new Error('Invalid bundled animation');
+      if(cache.size>=30) cache.delete(cache.keys().next().value!);
+      cache.set(id,{expires:Date.now()+24*60*60*1000,data});
+      return data;
+    } catch(error) {
+      if((error as NodeJS.ErrnoException).code!=='ENOENT') throw error;
+    }
     const slug=gift.name.replace(/[^a-z0-9]/gi,'');
     // Official public collectible preview: use a real named gift, not the old
     // third-party numeric sticker IDs, which did not reliably match names.

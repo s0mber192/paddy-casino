@@ -27,7 +27,7 @@ export function catalogWithPrices() {
   const byId = new Map(prices.map(p => [p.gift_id, p]));
   return GIFTS.map(g => {
     const p = byId.get(String(g.id))!;
-    return { id: String(g.id), name: g.name, price_stars: p.price, animation_url: `/api/gifts/animation/${g.id}?v=official-1`, price_source: p.source, price_updated_at: p.updated_at, price_stale: !p.updated_at || Date.now() - p.updated_at > 60 * 60 * 1000 };
+    return { id: String(g.id), name: g.name, price_stars: p.price, animation_url: `/api/gifts/animation/${g.id}?v=official-2`, price_source: p.source, price_updated_at: p.updated_at, price_stale: !p.updated_at || Date.now() - p.updated_at > 60 * 60 * 1000 };
   });
 }
 

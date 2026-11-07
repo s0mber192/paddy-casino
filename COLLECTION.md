@@ -33,7 +33,7 @@ Expected JSON array:
 
 `updated_at` is the source observation timestamp in milliseconds, not the fetch time. Sources currently accepted: `tonnel`, `mrkt`. The adapter must convert actual market quotations into the documented game-star scale; TON values must never be passed as star values without conversion. The adapter itself and authorized marketplace access are not supplied by this change. Do not call reference data live until the upstream is configured and verified.
 
-Images are public previews from `https://t.me/nft/<GiftName>-1`; they illustrate one actual variant, not every variant in the collection. TGS animations are decompressed on the backend and cached. Missing previews show a neutral fallback. Old third-party numeric animation mappings are not used.
+Bundled images in `frontend/public/gifts` are preferred at runtime, so VPS connectivity to Telegram is not required. `sources.json` records provenance. Public project-catalog assets are used as fallbacks when a collectible preview is unavailable. Images include public previews from `https://t.me/nft/<GiftName>-1`; they illustrate one actual variant, not every variant in the collection. TGS animations are decompressed on the backend and cached. Missing previews show a neutral fallback. Old third-party numeric animation mappings are not used.
 
 ## Database and deployment
 

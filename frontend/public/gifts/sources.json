@@ -1,0 +1,786 @@
+{
+  "164": {
+    "name": "Heart Locket",
+    "status": "bundled",
+    "source": "https://t.me/nft/HeartLocket-1",
+    "sha256": "9a99606721ebed8d5e95c4f7c81e76a3a31b29408c66d371e071a26a827e563e"
+  },
+  "214": {
+    "name": "Resistance Dog",
+    "status": "bundled",
+    "source": "https://t.me/nft/ResistanceDog-1",
+    "sha256": "62042c47678b91ebe3e27d466795a718266e0289b77940f96fe1f9f67fde6aee"
+  },
+  "3": {
+    "name": "Durov's Cap",
+    "status": "bundled",
+    "source": "https://t.me/nft/DurovsCap-1",
+    "sha256": "23f6bd24f389bbc24c8e18221fd6f67d6c654f8465450580c9605d7a77b6690a"
+  },
+  "65": {
+    "name": "Precious Peach",
+    "status": "bundled",
+    "source": "https://t.me/nft/PreciousPeach-1",
+    "sha256": "be9528d9c7b6ddf10e8eae860f55276bed8dcc556bc9695f7c3d5abc6c6d740f"
+  },
+  "68": {
+    "name": "Scared Cat",
+    "status": "bundled",
+    "source": "https://t.me/nft/ScaredCat-1",
+    "sha256": "e0dbdbc82bbe6a287cd7e305a6472aed7562074692acc8b37c0dd5b2a8e204e0"
+  },
+  "150": {
+    "name": "Heroic Helmet",
+    "status": "bundled",
+    "source": "https://t.me/nft/HeroicHelmet-1",
+    "sha256": "71553dd333dd9ff1bfe5722f7f0aaf5387d81ee08e00676fa543ebb5023dd5e8"
+  },
+  "149": {
+    "name": "Mighty Arm",
+    "status": "bundled",
+    "source": "https://t.me/nft/MightyArm-1",
+    "sha256": "6ea34c4d066a92d32e170c880e207ac1d12abdeb3722deabf192771bf5dd7f73"
+  },
+  "13": {
+    "name": "Loot Bag",
+    "status": "bundled",
+    "source": "https://t.me/nft/LootBag-1",
+    "sha256": "24733c09e80233058d8a8993e918ff499e26b85cedf761e971fce566b846453f"
+  },
+  "40": {
+    "name": "Astral Shard",
+    "status": "bundled",
+    "source": "https://t.me/nft/AstralShard-1",
+    "sha256": "a781da57a3fc1cb5c9023cc3796856dc32580afe4fef9a0329c07a76dc48808a"
+  },
+  "105": {
+    "name": "Nail Bracelet",
+    "status": "bundled",
+    "source": "https://t.me/nft/NailBracelet-1",
+    "sha256": "e32e81372a3c0e04e28f6deee6425a73a294289956c5d577721222523bdc0d46"
+  },
+  "130": {
+    "name": "Westside Sign",
+    "status": "bundled",
+    "source": "https://t.me/nft/WestsideSign-1",
+    "sha256": "664c0e29630c637da58565412a39f136317772032a2af4daa294b44534d9edef"
+  },
+  "64": {
+    "name": "Perfume Bottle",
+    "status": "bundled",
+    "source": "https://t.me/nft/PerfumeBottle-1",
+    "sha256": "b974fe0b99db2e99122d3b5d2512b83866c2c3a8965c778fe2b1331c9e7d2747"
+  },
+  "62": {
+    "name": "Mini Oscar",
+    "status": "bundled",
+    "source": "https://t.me/nft/MiniOscar-1",
+    "sha256": "16ec170cce3654252bfe0c8815a7e7d2d5d05484bb6a8e3a580d6662d330f625"
+  },
+  "53": {
+    "name": "Ion Gem",
+    "status": "bundled",
+    "source": "https://t.me/nft/IonGem-1",
+    "sha256": "86974bfc4a594cb7b005704900a35490ed446bc03d0b388f0b91ea2f87dbedb2"
+  },
+  "148": {
+    "name": "Artisan Brick",
+    "status": "bundled",
+    "source": "https://t.me/nft/ArtisanBrick-1",
+    "sha256": "7035f9a45683f950c19659d7dac569713e1ef78655cbea610211f52caafe9085"
+  },
+  "108": {
+    "name": "Gem Signet",
+    "status": "bundled",
+    "source": "https://t.me/nft/GemSignet-1",
+    "sha256": "31c2f87ca88bd27d867ecc0791891499369d35567e5e76f57311658e5bce4901"
+  },
+  "129": {
+    "name": "Low Rider",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/low-rider.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "363c9fab7a140b194feebb74446b1a06ed8cb45f7c8aa9f8279665a971558ecd"
+  },
+  "77": {
+    "name": "Swiss Watch",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-77.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "13f6e38f830b33e8ef5c21ec009387149def3f047ddc6e11cd4409d4f7bc7ade"
+  },
+  "61": {
+    "name": "Magic Potion",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-61.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "8f94f139a05b0d00498bcbc9588f71878276c8a4f10e95ed8067014498fc5e7d"
+  },
+  "69": {
+    "name": "Sharp Tongue",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-69.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "fca073f37cf4d5575b9f9f7fd5e8411860970a81cd90eb772453d5da3aaf5f46"
+  },
+  "57": {
+    "name": "Kissed Frog",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-57.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "07c2ff8bd39b00a0b1d1b49207afc52e58d65118be94879476fd0d1a0a486823"
+  },
+  "101": {
+    "name": "Bonded Ring",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/bonded-ring.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "b13a77531038b61641e7c265522a1a3c898c6d907256b53beb2cc8369dc52bd1"
+  },
+  "20": {
+    "name": "Vintage Cigar",
+    "status": "bundled",
+    "source": "https://t.me/nft/VintageCigar-1",
+    "sha256": "e4ad72db2bc41883b572577b51d9ea31bbb66f4667630dcf96e2ed481a340ef2"
+  },
+  "27": {
+    "name": "Neko Helmet",
+    "status": "bundled",
+    "source": "https://t.me/nft/NekoHelmet-1",
+    "sha256": "c9ebfcc9f2136f53967abd62289a05cc83a6f88bf825620111876c3cd8a1ecd0"
+  },
+  "23": {
+    "name": "Voodoo Doll",
+    "status": "bundled",
+    "source": "https://t.me/nft/VoodooDoll-1",
+    "sha256": "16f944c8005b36176de69dc4d6de44505a462c27083c96f1c55c5eb682a150dc"
+  },
+  "49": {
+    "name": "Genie Lamp",
+    "status": "bundled",
+    "source": "https://t.me/nft/GenieLamp-1",
+    "sha256": "e3d2a7eb34b69ddbaff5895d93e415b16181e5b90432842a014d5d14cdbc7b8e"
+  },
+  "1": {
+    "name": "Toy Bear",
+    "status": "bundled",
+    "source": "https://t.me/nft/ToyBear-1",
+    "sha256": "49ca74ab42f705bf1394540dcd595cac48930cd23e6dd1246c035a3299743742"
+  },
+  "70": {
+    "name": "Signet Ring",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-70.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "3273524bf341be52d479f546c39208e8fc1e189754b9edb9b630406c98d67e5f"
+  },
+  "5": {
+    "name": "Diamond Ring",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-5.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "91d0bfa378831584545925e7ba8ce43c46e51ae2f18e05e0b75f3ceda1eaac40"
+  },
+  "196": {
+    "name": "Rare Bird",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/rare-bird.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "aa91a6135251142d598a45f5ac7f8842650e858cf5aa7f6b9424a649236d9b1a"
+  },
+  "37": {
+    "name": "Electric Skull",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-37.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "aa8621f885c8520bef6c6e32f91b73f930ba9383e21e1b818bc3469dbd911834"
+  },
+  "47": {
+    "name": "Eternal Rose",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-47.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "adde24eb0d5a35f6afb54ec66d7457eeadf83ce1ead45ea0dbcd9e544bbc831e"
+  },
+  "162": {
+    "name": "Bling Binky",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/blingbinky.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "1dd329608845c595f5b0539eca488cd49b2e78f80ed7dc1431610d9b1c2bd832"
+  },
+  "172": {
+    "name": "Khabib's Papakha",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/KhabibsPapakha.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "9668daa341a35da2861e0b76fbba7d48eeb3ebe43f673f4fb054278331e115bb"
+  },
+  "137": {
+    "name": "Cupid Charm",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/cupid-charm.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "a5a7b3cae17d4266b68326e55946ce84394217cffc54fb3ce1be7193a14e0c75"
+  },
+  "153": {
+    "name": "Sky Stilettos",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/SkyStilettos.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "2484ad1ecb6108f45c184574c0e3edff0e6203f1416f9542c2c8a4533c2e7a0f"
+  },
+  "215": {
+    "name": "Lucky Locket",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/LuckyLocket.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "077bea26515a2c82882ddf9f3d1c071b9416f614d681b498bdab106fb85c9e1c"
+  },
+  "78": {
+    "name": "Trapped Heart",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-78.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "913d51f4b4d5c7154de2e9abc2618844290c8adf151de6d802c8eec7d26d7a08"
+  },
+  "178": {
+    "name": "UFC Strike",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/ufc_strike.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "64739c6869d60796e8c7500ac4742dd03ba5cc47f9827cf95b207c5c4474edb6"
+  },
+  "128": {
+    "name": "Snoop Cigar",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/snoop-%D1%81igar.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "fb15312fa737de2dc65d67d2b94bddc1bb66cd72d0f2f50d2481ae241786155e"
+  },
+  "21": {
+    "name": "Love Potion",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-21.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "4b1882c4da9dce14a857adfcdc8f3387979819fb5ed150160701cbf57ce03013"
+  },
+  "146": {
+    "name": "Ionic Dryer",
+    "status": "bundled",
+    "source": "https://t.me/nft/IonicDryer-1",
+    "sha256": "f988c76202cbe5cacaa97a879b99b12da6ca6e3db60bf80f8d838366f5a430bb"
+  },
+  "60": {
+    "name": "Mad Pumpkin",
+    "status": "bundled",
+    "source": "https://t.me/nft/MadPumpkin-1",
+    "sha256": "ffd952ad56f916340778025791053e5216129507aa82692098d9f1db5741419d"
+  },
+  "48": {
+    "name": "Flying Broom",
+    "status": "bundled",
+    "source": "https://t.me/nft/FlyingBroom-1",
+    "sha256": "adc78ebdb5c13c49b86277e49c12ab0d80be13346092572113da08914e0d7afb"
+  },
+  "45": {
+    "name": "Crystal Ball",
+    "status": "bundled",
+    "source": "https://t.me/nft/CrystalBall-1",
+    "sha256": "4d5932f66c4b5605ee58083056ac82d7d29e2a5f51e8bd1da6c76cdedb86f5b2"
+  },
+  "66": {
+    "name": "Record Player",
+    "status": "bundled",
+    "source": "https://t.me/nft/RecordPlayer-1",
+    "sha256": "f0469becd2fabc1ebfb67f7069806e2c15457aead83bc73a16da20b154b7d5e5"
+  },
+  "71": {
+    "name": "Skull Flower",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-71.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "14addbbed505d62370ecea369dfa2a8ff157bf091b6acb944ace528511a452d4"
+  },
+  "136": {
+    "name": "Valentine Box",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/valentine-box.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "4004f99b90bf172727d2e863cab04dbe525ab4a05c1f47359d9b1b786ba4ba0d"
+  },
+  "58": {
+    "name": "Love Candle",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-58.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "9e0560128c6c60af41091ba3eb811658f0cdd99eba9d2a5695a1366eb711db45"
+  },
+  "26": {
+    "name": "Sakura Flower",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-26.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "8a8a4bec10d4866bb2780336f207daaccdf34bf71cc51d793ab7b8ddccc05305"
+  },
+  "56": {
+    "name": "Jingle Bells",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-56.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "e94f734a6bdba6009f01bedb733f0ec50a09ffb6e9bf9a1888da90dcf46ab0c9"
+  },
+  "22": {
+    "name": "Top Hat",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-22.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "bcd40e31ce7671eb8f6c5fca8743d405d3375b066a62d0a7954be0af4bc7d8c7"
+  },
+  "50": {
+    "name": "Hanging Star",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-50.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "a3f5408c704d3a5ebdb8e401fbfb32ed509a82c1490f0d514f4ced61eb8625ca"
+  },
+  "42": {
+    "name": "Berry Box",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-42.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "f545135fca93640b2f3025cbbecfb92c72b64659816dd1eba6ba2d37f45fdfe1"
+  },
+  "208": {
+    "name": "Fine Pen",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/FinePen.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "dda64b08aa5f7eae13c87e5c9f68a07577d770e6c851dc402853934c0bfd954a"
+  },
+  "72": {
+    "name": "Sleigh Bell",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-72.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "ef95954f8fd02dd6607998d613f5b5b764832fee1117aa68d2da85ca5d9f73cc"
+  },
+  "43": {
+    "name": "Bunny Muffin",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-43.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "26e6a3d46bc426ec499e9c6b0422bdd4206dcb54df079662a24486f3a34f5e7a"
+  },
+  "135": {
+    "name": "Joyful Bundle",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/joyful-bundle.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "5eff847e5517e122cad51c84c781e13131802f1196a2ec46fec322e2b95bdc7c"
+  },
+  "54": {
+    "name": "Jelly Bunny",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-54.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "7a567f663ee04471b98f464400e6834ca5c3a5149f2a7149980237b0d92baa03"
+  },
+  "24": {
+    "name": "Evil Eye",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-24.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "57b877fc45f9b2ef46214b4ddb27406c783ffc8fc20759afa5b0d76713360c5e"
+  },
+  "144": {
+    "name": "Jolly Chimp",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/monkey.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "2182409df70a7331b21aaad0b4aed6b958fcdc3624cc930c104ef8f610c33ae5"
+  },
+  "109": {
+    "name": "Light Sword",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/light-sword.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "9185085e768026d0f40d3c0f7bbdeb6eff8a3a93cfe454bdaf0820d43be3e66a"
+  },
+  "206": {
+    "name": "Surge Board",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/SurgeBoard.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "b1af2f0a1f2adff0fa58f18f3ec53b4d4d0ae3e0d23942b46f60dbd6bd9652c1"
+  },
+  "145": {
+    "name": "Moon Pendant",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/moon-pendant.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "f360e37d7675ba2ca6d31f22b6a4837f8191145a5024ddb6a805d49b59dd7420"
+  },
+  "147": {
+    "name": "Input Key",
+    "status": "bundled",
+    "source": "https://t.me/nft/InputKey-1",
+    "sha256": "0d1d649956661b6b11e1dfe62fadf3fc95ca06f87261ece095089d05e3a7dab9"
+  },
+  "134": {
+    "name": "Lush Bouquet",
+    "status": "bundled",
+    "source": "https://t.me/nft/LushBouquet-1",
+    "sha256": "dfe192e8da64885d90fb7c4d2d44c265e3c67fd2b4e3081d2f3c4119d6d30bd6"
+  },
+  "79": {
+    "name": "Witch Hat",
+    "status": "bundled",
+    "source": "https://t.me/nft/WitchHat-1",
+    "sha256": "2a6f8e09b3cdec1cc888bae158d6a3d600e4120c9bb0db1c2b254ecc85c93265"
+  },
+  "46": {
+    "name": "Eternal Candle",
+    "status": "bundled",
+    "source": "https://t.me/nft/EternalCandle-1",
+    "sha256": "f14d546e30ff8619035873d0c2320264b169b27aca6ac89085ff0ab99f17ac8e"
+  },
+  "11": {
+    "name": "Desk Calendar",
+    "status": "bundled",
+    "source": "https://t.me/nft/DeskCalendar-1",
+    "sha256": "aa304ea1b0a6188d3967e65ef92fd82f150a80c86c333e782a8a8ff3de078d61"
+  },
+  "158": {
+    "name": "Spring Basket",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/SpringBasket.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "ab9256bedf6f812e524911dc2bd315b678db920591b492677ec45bedb7cfd68c"
+  },
+  "75": {
+    "name": "Spy Agaric",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-75.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "6169d0a0b3f689f0baa55426acd69a5bdc4515f6314b52d2e503b7e83c23e717"
+  },
+  "165": {
+    "name": "Pretty Posy",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/prettyposy.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "c2811bd32b9d3adbc60be9e1489b54cbac187f08532133baed5654c13c50eab3"
+  },
+  "125": {
+    "name": "Snoop Dogg",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/snoop-dogg.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "7dc1cefb7a234a8be45e36695d5a431f435082fffe7823d0db6555e12d8609af"
+  },
+  "39": {
+    "name": "Snow Globe",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-39.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "34c7325ea0950d99f16ff6d43264d4087c34a60f29804db2468e2fd077dbd942"
+  },
+  "156": {
+    "name": "Faith Amulet",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/FaithAmulet.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "8f083ccd7d4f150c1bff145173f15adb798e14990566fe505d7a3093adc6c2fc"
+  },
+  "73": {
+    "name": "Snow Mittens",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-73.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "3673c8635e36bad67cad730b881ef4f1396c39c17d77a4154b0af127ce374306"
+  },
+  "143": {
+    "name": "Stellar Rocket",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/racket.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "312bcf2fd7d1cbab36a0e5740df6920508e401c09c015ca752e5fde8cef25f00"
+  },
+  "67": {
+    "name": "Santa Hat",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-67.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "59b7a545f90ed09f508ad25e45d2151d02ff89edbd370ead1174edc570125f7d"
+  },
+  "126": {
+    "name": "Swag Bag",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/swag-bag.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "d712c746df8462e43eaa8c07ca6f164a95d5dac1827ab3310404cc4d6dfe14dc"
+  },
+  "52": {
+    "name": "Homemade Cake",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-52.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "0ca93664c8bb678d84674fa4ab9b897e56542c0a0a48e79567794ad9b96b157a"
+  },
+  "107": {
+    "name": "Restless Jar",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/restless-jar.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "557e3bde7248de6a41642d562e1d167234e96c5bf0605c4c7a28c5711cf1e90c"
+  },
+  "207": {
+    "name": "Liberty Figure",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/LibertyFigure.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "32e2c3078bdb39b6322ebb02513520494278122068734b0f182170b07d7ccf50"
+  },
+  "163": {
+    "name": "Money Pot",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/moneypot.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "2ff1adf648be25aaf65dafe10bcf6565e06d4ded1c06d3a81d45f42f2713dd75"
+  },
+  "112": {
+    "name": "Bow Tie",
+    "status": "bundled",
+    "source": "https://t.me/nft/BowTie-1",
+    "sha256": "fbd69233cf4ece34ee57c297a4f86f69b257dc7346a519015aefc3788aab91bf"
+  },
+  "81": {
+    "name": "Jack-in-the-Box",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-81.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "30a358cb87c946f4e8cef08de33b3b7689566747ea52ffb70c3bf5de58bf0279"
+  },
+  "155": {
+    "name": "Mousse Cake",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/MousseCake.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "102d7550c851561075427a48050534668ea3128bb295ad5025664fc03f32e3a4"
+  },
+  "152": {
+    "name": "Clover Pin",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/CloverPin.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "3b63c4dbef57f4202f31ed4eb41593335fbb5c57e9ad3ffea142efea46b4dcf3"
+  },
+  "41": {
+    "name": "B-Day Candle",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-41.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "ff32a759cee60a672006ebc187dc9c6ea4a4527359f7b53802835cfa06b4f32e"
+  },
+  "51": {
+    "name": "Hex Pot",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-51.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "989f62345c42f99b9b18fb5082d2cf678d405c13c8ff096c450af4b8437a3fab"
+  },
+  "44": {
+    "name": "Cookie Heart",
+    "status": "bundled",
+    "source": "https://t.me/nft/CookieHeart-1",
+    "sha256": "3494d87e7f90a951008f2d6757a175900eebeaebf228239ea2cbb52d4ccc2653"
+  },
+  "195": {
+    "name": "Victory Medal",
+    "status": "bundled",
+    "source": "https://t.me/nft/VictoryMedal-1",
+    "sha256": "7b3d6b3bc40d6c49ce66b4b4108e1ae4d5de9ba5b2ef7cbb7f996c0dced613c7"
+  },
+  "213": {
+    "name": "Mirage Lamp",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/MirageLamp.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "f5595111e04a25c280fa8ef64eb8819ec7894a6961e5a3cd7a021cf9849adaf7"
+  },
+  "76": {
+    "name": "Star Notepad",
+    "status": "bundled",
+    "source": "https://t.me/nft/StarNotepad-1",
+    "sha256": "cf756180c5389c23bdda9ecc5146c8fdf84a6336b93bbc67739dc3c0eecd5ca8"
+  },
+  "63": {
+    "name": "Party Sparkler",
+    "status": "bundled",
+    "source": "https://t.me/nft/PartySparkler-1",
+    "sha256": "a6cc83234961d45fee57ef5681f455b7637eec753282f826782efa538f3bf7f7"
+  },
+  "201": {
+    "name": "Timeless Book",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/TimelessBook.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "48d31b6485da14fd1dbc3555c328b5f4ceebdbbd8122eef0c122e88d01a7a9df"
+  },
+  "151": {
+    "name": "Fresh Socks",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/sock.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "a17d704d718dbd98a9a91054dbd8fab563fbe4450a017b9dcbef94852ead48a4"
+  },
+  "74": {
+    "name": "Spiced Wine",
+    "status": "bundled",
+    "source": "https://t.me/nft/SpicedWine-1",
+    "sha256": "fdb55a0aa0e64d6ea01b9c833ea98a684b4e0a59437df264023ee14db0519181"
+  },
+  "198": {
+    "name": "Mood Pack",
+    "status": "bundled",
+    "source": "https://t.me/nft/MoodPack-1",
+    "sha256": "7ba09586275e078872e5d12597400cd60c70bd4cc3f756ac2588dd16f000605a"
+  },
+  "35": {
+    "name": "Winter Wreath",
+    "status": "bundled",
+    "source": "https://t.me/nft/WinterWreath-1",
+    "sha256": "2b358aa22b463d92b68ae9a55372fce21cffb8905e62e7d3e0a117d7ee156870"
+  },
+  "4": {
+    "name": "Ginger Cookie",
+    "status": "bundled",
+    "source": "https://t.me/nft/GingerCookie-1",
+    "sha256": "61affabb55696053dba24df9d3250b3cb79ff18c43ee861842f59daf24f1faa0"
+  },
+  "154": {
+    "name": "Happy Brownie",
+    "status": "bundled",
+    "source": "https://t.me/nft/HappyBrownie-1",
+    "sha256": "917661bf564896a873f1d705c0d7bab6d01feef19028f3820f6b8527db12a7bf"
+  },
+  "87": {
+    "name": "Easter Egg",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-87.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "9fccb9f7bf1455752c2651a2fdfa82c0589cbd300bcdcedc61cbff769f894ba2"
+  },
+  "38": {
+    "name": "Tama Gadget",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-38.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "4d2e118860318468816eed16b1c945a57792022c47cb4d02c8c253fe316266c7"
+  },
+  "28": {
+    "name": "Hypno Lollipop",
+    "status": "bundled",
+    "source": "https://t.me/nft/HypnoLollipop-1",
+    "sha256": "6be0531fd245c4bb29abe261f704bab12005066eb4cb3ae55d2c46611f494e4b"
+  },
+  "55": {
+    "name": "Jester Hat",
+    "status": "bundled",
+    "source": "https://t.me/nft/JesterHat-1",
+    "sha256": "4d2b688647f1e2d9137217116154e88d5a63037b7be98fe88023c921e4642789"
+  },
+  "103": {
+    "name": "Pet Snake",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/pet-snake.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "6759db6b45bbbae15c2bdaa2a66f8f916337d63f4adc086d9edfb892001161e9"
+  },
+  "122": {
+    "name": "Holiday Drink",
+    "status": "bundled",
+    "source": "https://t.me/nft/HolidayDrink-1",
+    "sha256": "56619893430feec9cec33afd113cdc2c7dbc6e06cececdf28b6fb96fcb3b18cc"
+  },
+  "36": {
+    "name": "Candy Cane",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-36.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "d7e4efcc1ce9663706c41699c4fe299da607bb6b4f8006ca7659c5f3a9810255"
+  },
+  "133": {
+    "name": "Whip Cupcake",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/whip-cupcake.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "f49fca581a3b746ab91d656bb76f0f442bd475fb62acde5c7476270facaa49b0"
+  },
+  "25": {
+    "name": "Lol Pop",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/telegram-gift-sticker-25.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "9557d7ed0d1b9f3bdbe67fa42c688b2cc41e92a97d821c234022cf2bc5ed67ff"
+  },
+  "202": {
+    "name": "Vice Cream",
+    "status": "bundled",
+    "source": "https://t.me/nft/ViceCream-1",
+    "sha256": "3fbe7117200cc5a68204e593fe7cf4995a24cf9a41d8bce910a17bb919f1bc21"
+  },
+  "157": {
+    "name": "Instant Ramen",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/InstantRamen.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "17d4f8c2fe03c5cc248619bf29fd05845892a28845cd38606ffe09830a76d009"
+  },
+  "102": {
+    "name": "Big Year",
+    "status": "bundled",
+    "source": "https://t.me/nft/BigYear-1",
+    "sha256": "42f5a09ace4e536593f80242a5e9afa35e1f1e46fd7b07d87c8435a6a2bba0c3"
+  },
+  "106": {
+    "name": "Snake Box",
+    "status": "bundled",
+    "source": "https://t.me/nft/SnakeBox-1",
+    "sha256": "375eedbf642e1a8643972a23a3612c9d019dd2c2091e47c8649bbd41400d492a"
+  },
+  "104": {
+    "name": "Xmas Stocking",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/xmas-stocking.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "41db9ab50343f3f5586409219e5754e2ec7cfdefa2d0c94078ba8eac228e05eb"
+  },
+  "159": {
+    "name": "Ice Cream",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/IceCream.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "72c27cdea1e0239409950add2481026f5c9835784405681131bccd33acd4aa37"
+  },
+  "200": {
+    "name": "Chill Flame",
+    "status": "bundled",
+    "source": "https://t.me/nft/ChillFlame-1",
+    "sha256": "29becbbc7f0d065b11e938179338a235633a64cc695bce5b4460a64cfdcfb71b"
+  },
+  "199": {
+    "name": "Pool Float",
+    "status": "bundled",
+    "source": "https://proxy-cdn.virusgift.pro/PoolFloat.json?v=1",
+    "provider": "existing-project-catalog",
+    "sha256": "38bd4c30fa758689eb309f36c4df29c445569e6d02ed589988ca1e6027e670f8"
+  },
+  "59": {
+    "name": "Lunar Snake",
+    "status": "bundled",
+    "source": "https://t.me/nft/LunarSnake-1",
+    "sha256": "8fc1f998c05c3cdfc0383d7986be4ca9f654b34308dd36340824f4c6565ce232"
+  }
+}
