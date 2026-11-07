@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { GIFTS } from './catalog.js';
 import type { TgUser } from './auth.js';
 
 const dbPath = process.env.DB_PATH ?? './data/casino.db';
@@ -40,8 +41,8 @@ CREATE TABLE IF NOT EXISTS referral_claims (
 );
 `);
 
-db.exec(`DROP TABLE IF EXISTS case_openings;`);
-db.exec(`DROP TABLE IF EXISTS cases;`);
+// Preserve existing cases and opening history on restart.
+
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS cases (
@@ -134,7 +135,7 @@ const seedLoot = [
 
 for (const c of seedLoot) {
   db.prepare(
-    `INSERT INTO cases (slug, name, price_coins, price_stars, currency, image_url, loot) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO cases (slug, name, price_coins, price_stars, currency, image_url, loot) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(slug) DO NOTHING`
   ).run(c.slug, c.name, c.price_coins, c.price_stars, c.currency, c.image_url, JSON.stringify(c.loot));
 }
 
@@ -226,10 +227,11 @@ function rollLoot(loot: LootItem[]): number {
 }
 
 export const openCase = db.transaction((telegramId: number, caseId: number) => {
+  assertAmount(caseId);
   const c = db.prepare<[number], CaseRow>(`SELECT * FROM cases WHERE id = ?`).get(caseId);
   if (!c) throw new GameError('CASE_NOT_FOUND', 404);
 
-  if (c.currency === 'stars') throw new GameError('STARS_NOT_SUPPORTED_YET', 400);
+
 
   const user = getUserStmt.get(telegramId);
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
@@ -251,7 +253,7 @@ export function spinWheel(telegramId: number) {
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
 
   const now = Date.now();
-  const cooldown = 10 * 1000;
+  const cooldown = 24 * 60 * 60 * 1000;
 
   if (now - user.last_wheel_spin < cooldown) {
     throw new GameError('WHEEL_COOLDOWN', 429);
@@ -266,22 +268,22 @@ export function spinWheel(telegramId: number) {
   return { reward, balance: getUserStmt.get(telegramId)!.balance };
 }
 
-export function standardUpgrade(telegramId: number, bet: number, target: number) {
+export const standardUpgrade = db.transaction((telegramId: number, bet: number, giftId: string) => {
+  assertAmount(bet);
+  const gift = GIFTS.find(g => String(g.id) === giftId);
+  if (!gift) throw new GameError('GIFT_NOT_FOUND', 404);
+  const price = getGiftPrice(giftId);
+  if (bet >= price) throw new GameError('BAD_AMOUNT');
   const user = getUserStmt.get(telegramId);
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
   if (user.balance < bet) throw new GameError('INSUFFICIENT_FUNDS', 402);
-  if (bet <= 0 || target <= bet) throw new GameError('BAD_AMOUNT', 400);
-
-  const chance = bet / target;
-  const roll = crypto.randomInt(1_000_000) / 1_000_000;
-  const win = roll <= chance;
-
-  const newBalance = win ? user.balance - bet + target : user.balance - bet;
-  
-  db.prepare(`UPDATE users SET balance = ? WHERE telegram_id = ?`).run(newBalance, telegramId);
-
-  return { win, newBalance, bet, target, chancePercent: Math.floor(chance * 100) };
-}
+  const chance = Math.min(0.95, bet / price);
+  const win = crypto.randomInt(1_000_000) < Math.floor(chance * 1_000_000);
+  db.prepare('UPDATE users SET balance = balance - ? WHERE telegram_id = ?').run(bet, telegramId);
+  let cardId: number | null = null;
+  if (win) cardId = Number(db.prepare('INSERT INTO collection_cards(telegram_id,gift_id,created_at) VALUES(?,?,?)').run(telegramId, giftId, Date.now()).lastInsertRowid);
+  return { win, newBalance: getUserStmt.get(telegramId)!.balance, bet, target: price, chancePercent: Math.floor(chance * 100), cardId };
+});
 
 export function mysteryUpgrade(telegramId: number, bet: number) {
   const user = getUserStmt.get(telegramId);
@@ -289,6 +291,7 @@ export function mysteryUpgrade(telegramId: number, bet: number) {
   if (user.balance < bet) throw new GameError('INSUFFICIENT_FUNDS', 402);
   if (bet <= 0) throw new GameError('BAD_AMOUNT', 400);
 
+  assertAmount(bet);
   const minWin = Math.floor(bet / 10);
   const maxWin = Math.floor(bet * 10);
   const winAmount = crypto.randomInt(minWin, maxWin + 1);
@@ -347,12 +350,60 @@ export function claimReferralMilestone(telegramId: number, milestone: number) {
   return { success: true, reward: m.reward, newBalance: getUserStmt.get(telegramId)!.balance };
 }
 
-export function requestWithdrawal(telegramId: number, amount: number) {
-  const user = getUserStmt.get(telegramId);
-  if (!user) throw new GameError('USER_NOT_FOUND', 404);
-  if (user.balance < amount) throw new GameError('INSUFFICIENT_FUNDS', 402);
-  if (amount < 1000) throw new GameError('MIN_WITHDRAW_1000', 400);
+// Collection edition: all costs are earned game points, never Telegram Stars.
+db.exec(`
+CREATE TABLE IF NOT EXISTS collection_cards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  telegram_id INTEGER NOT NULL REFERENCES users(telegram_id),
+  gift_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS collection_owner ON collection_cards(telegram_id);
+CREATE TABLE IF NOT EXISTS gift_prices (
+  gift_id TEXT PRIMARY KEY,
+  price INTEGER NOT NULL CHECK(price > 0),
+  source TEXT NOT NULL,
+  updated_at INTEGER
+);
+`);
+db.transaction(() => {
+  for (const gift of GIFTS) db.prepare("INSERT INTO gift_prices(gift_id,price,source) VALUES(?,?,'reference') ON CONFLICT(gift_id) DO NOTHING").run(String(gift.id), gift.stars);
+  db.prepare("UPDATE cases SET currency='coins', price_coins=CASE WHEN price_coins > 0 THEN price_coins ELSE price_stars * 1000 END, price_stars=0 WHERE currency='stars'").run();
+})();
 
-  db.prepare(`UPDATE users SET balance = balance - ? WHERE telegram_id = ?`).run(amount, telegramId);
-  db.prepare(`INSERT INTO withdrawals (telegram_id, amount) VALUES (?, ?)`).run(telegramId, amount);
+export function assertAmount(value: number) {
+  if (!Number.isSafeInteger(value) || value < 1 || value > 100_000_000) throw new GameError('BAD_AMOUNT');
 }
+export function getGiftPrice(giftId: string): number {
+  const row = db.prepare('SELECT price FROM gift_prices WHERE gift_id=?').get(giftId) as { price: number } | undefined;
+  if (!row) throw new GameError('GIFT_NOT_FOUND', 404);
+  return row.price;
+}
+export function getCollection(telegramId: number) {
+  return db.prepare('SELECT id, gift_id AS giftId, created_at AS createdAt FROM collection_cards WHERE telegram_id=? ORDER BY id DESC').all(telegramId);
+}
+export const sellCard = db.transaction((telegramId: number, cardId: number) => {
+  assertAmount(cardId);
+  const card = db.prepare('SELECT gift_id FROM collection_cards WHERE id=? AND telegram_id=?').get(cardId, telegramId) as {gift_id: string} | undefined;
+  if (!card) throw new GameError('CARD_NOT_FOUND', 404);
+  const price = getGiftPrice(card.gift_id);
+  const changed = db.prepare('UPDATE users SET balance=balance+? WHERE telegram_id=? AND balance <= ?').run(price, telegramId, Number.MAX_SAFE_INTEGER - price);
+  if (!changed.changes) throw new GameError('BALANCE_LIMIT');
+  db.prepare('DELETE FROM collection_cards WHERE id=? AND telegram_id=?').run(cardId, telegramId);
+  return { success: true, price, balance: getUserStmt.get(telegramId)!.balance };
+});
+
+export const upgradeCard = db.transaction((telegramId: number, cardId: number, targetGiftId: string) => {
+  assertAmount(cardId);
+  const owned = db.prepare('SELECT gift_id FROM collection_cards WHERE id=? AND telegram_id=?').get(cardId, telegramId) as {gift_id: string} | undefined;
+  if (!owned) throw new GameError('CARD_NOT_FOUND', 404);
+  const stake = getGiftPrice(owned.gift_id);
+  const target = getGiftPrice(targetGiftId);
+  if (target <= stake) throw new GameError('BAD_AMOUNT');
+  const chance = Math.min(0.95, stake / target);
+  const win = crypto.randomInt(1_000_000) < Math.floor(chance * 1_000_000);
+  db.prepare('DELETE FROM collection_cards WHERE id=? AND telegram_id=?').run(cardId, telegramId);
+  let newCardId: number | null = null;
+  if (win) newCardId = Number(db.prepare('INSERT INTO collection_cards(telegram_id,gift_id,created_at) VALUES(?,?,?)').run(telegramId, targetGiftId, Date.now()).lastInsertRowid);
+  return {win, chancePercent: Math.floor(chance * 100), cardId: newCardId};
+});

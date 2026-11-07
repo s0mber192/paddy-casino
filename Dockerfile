@@ -21,7 +21,7 @@ RUN npm prune --omit=dev
 FROM python:3.12-slim-bookworm AS runtime
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 NODE_ENV=production HOME=/root TZ=Europe/Moscow HOST=0.0.0.0 PORT=3000 GIFT_SERVICE_URL=http://127.0.0.1:8000 DATA_DIR=/data DB_PATH=/data/casino.db GIFT_APP=main:app BACKEND_ENTRY=dist/index.js
 
-RUN apt-get update && apt-get install -y --no-install-recommends supervisor ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends supervisor ca-certificates libstdc++6 \
     && rm -rf /var/lib/apt/lists/* && mkdir -p /data
 
 COPY --from=backend /usr/local/bin/node /usr/local/bin/node

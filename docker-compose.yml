@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
-      - ./data:/data
+      - ${PADDY_DATA_DIR:?Set PADDY_DATA_DIR to the existing database directory}:/data
     expose:
       - "3000"
 
@@ -28,4 +28,4 @@ services:
       - app
 
 volumes:
-        - /opt/paddy-data:/data
+  caddy_data:
