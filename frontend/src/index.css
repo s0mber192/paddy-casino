@@ -384,3 +384,19 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .rocket-scene span {position:absolute;top:50%;left:42%;width:85px;height:85px;transition:transform 45ms linear}
 .rocket-scene.crashed {background:radial-gradient(ellipse at 70% 70%,#633839,#211620 70%)}
 .rocket-panel select {color:#fff}
+
+.mode-tile {display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;min-height:168px;padding:10px;gap:6px}
+.mode-tile .mode-art {position:relative;inset:auto;transform:none;width:100px;height:94px;max-width:100%;align-self:center;z-index:0;flex:none}
+.mode-tile .mode-copy {position:relative;z-index:1;text-align:left}
+.mode-tile .mode-illustration {inset:0;width:100%;height:100%}
+.mode-tile:not(.mode-upgrade) .mode-gift {inset:auto;bottom:2px;left:calc(7px + var(--slot) * 31px);width:26px;height:26px;transform:none}
+.mode-upgrade .mode-gift {inset:35%;transform:rotate(var(--angle)) translateY(-32px) rotate(calc(-1 * var(--angle)))}
+.mode-upgrade,.mode-wheel,.mode-collection {display:grid;grid-template-columns:minmax(0,1fr) 104px;align-items:center;min-height:128px}
+.mode-upgrade .mode-art,.mode-wheel .mode-art,.mode-collection .mode-art {grid-column:2;grid-row:1}
+.mode-upgrade .mode-copy,.mode-wheel .mode-copy,.mode-collection .mode-copy {grid-column:1;grid-row:1}
+.mode-rocket {grid-column:1/-1}
+.rocket-panel .rocket-scene {display:block;width:100%;height:190px;min-height:190px;isolation:isolate}
+.rocket-path {position:absolute;inset:0;width:100%;height:100%;opacity:.45}
+.rocket-ship {position:absolute;width:66px;height:66px;transition:left 80ms linear,bottom 80ms linear}
+.rocket-ship .mode-illustration {inset:0}
+.rocket-scene.crashed .rocket-ship {filter:saturate(.65) drop-shadow(0 0 12px #f06a42)}

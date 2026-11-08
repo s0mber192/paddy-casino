@@ -4,7 +4,7 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'node:path';
 import { AuthError, validateInitData, type TgUser } from './auth.js';
-import { GameError, listCases, openCase, registerClick, getClicker, improveClicker, getRocket, launchRocket, cashRocket, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, claimReferralMilestone, getPlayerQuests, claimPlayerQuest, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
+import { GameError, listCases, openCase, registerClick, getClicker, improveClicker, getRocket, launchRocket, cashRocket, settleRocketAutos, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, claimReferralMilestone, getPlayerQuests, claimPlayerQuest, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
 import { giftsRoutes } from './gifts.js';
 import { startPriceRefresh } from './prices.js';
 
@@ -58,7 +58,6 @@ app.setErrorHandler((err, req, reply) => {
 const integer = {type: 'integer', minimum: 1, maximum: 100_000_000};
 const schemas: Record<string, Record<string, unknown>> = {
   '/api/clicker/improve': {action:{type:'string',enum:['power','bear','collect']}},
-  '/api/rocket/launch': {cardId:integer},
   '/api/rocket/cash': {launched:{type:'integer', minimum:1, maximum:Number.MAX_SAFE_INTEGER}},
   '/api/quests/claim': {id: integer},
   '/api/referrals/claim': {milestone: integer},
@@ -81,7 +80,6 @@ app.get('/api/me', async (req) => {
   return {
     progress,
     clicker: getClicker(u.telegram_id,COINS_PER_CLICK),
-    rocket: getRocket(u.telegram_id),
     quests: getPlayerQuests(u.telegram_id),
     referrals: getReferralStats(u.telegram_id),
     wheelReadyAt: u.last_wheel_spin ? u.last_wheel_spin + 24 * 60 * 60 * 1000 : 0,
@@ -101,8 +99,15 @@ app.post<{Body: {action:'power'|'bear'|'collect'}}>('/api/clicker/improve', asyn
   upsertUser(req.tgUser);
   return improveClicker(req.tgUser.id,req.body.action,COINS_PER_CLICK);
 });
+if (process.env.APP_TEST !== '1') setInterval(() => {
+  try {settleRocketAutos();} catch (error) {app.log.error(error);}
+},500).unref();
 app.get('/api/rocket',async req => getRocket(req.tgUser.id));
-app.post<{Body: {cardId:number}}>('/api/rocket/launch',async req => launchRocket(req.tgUser.id,req.body.cardId));
+app.post<{Body: {cardId:number; autoX?:number}}>('/api/rocket/launch', {
+  schema:{body:{type:'object',additionalProperties:false,required:['cardId'],properties:{
+    cardId:integer,autoX:{type:'number',minimum:1.01,maximum:20},
+  }}},
+}, async req => launchRocket(req.tgUser.id,req.body.cardId,req.body.autoX === undefined ? null : Math.round(req.body.autoX * 100) / 100));
 app.post<{Body: {launched:number}}>('/api/rocket/cash',async req => cashRocket(req.tgUser.id,req.body.launched));
 
 app.post<{ Body: { caseId: number } }>('/api/case/open', async (req) => {
