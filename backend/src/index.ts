@@ -4,7 +4,7 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'node:path';
 import { AuthError, validateInitData, type TgUser } from './auth.js';
-import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
+import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, claimReferralMilestone, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
 import { giftsRoutes } from './gifts.js';
 import { startPriceRefresh } from './prices.js';
 
@@ -58,6 +58,7 @@ app.setErrorHandler((err, req, reply) => {
 
 const integer = {type: 'integer', minimum: 1, maximum: 100_000_000};
 const schemas: Record<string, Record<string, unknown>> = {
+  '/api/referrals/claim': {milestone: integer},
   '/api/case/open': {caseId: integer},
   '/api/upgrade/standard': {bet: integer, giftId: {type: 'string', pattern: '^[0-9]+$', maxLength: 10}},
   '/api/upgrade/mystery': {bet: integer},
@@ -76,6 +77,7 @@ app.get('/api/me', async (req) => {
   const {bonus, ...progress} = getCollectionProgress.immediate(u.telegram_id);
   return {
     progress,
+    referrals: getReferralStats(u.telegram_id),
     wheelReadyAt: u.last_wheel_spin ? u.last_wheel_spin + 24 * 60 * 60 * 1000 : 0,
     user: { id: u.telegram_id, username: u.username, firstName: u.first_name, balance: u.balance + bonus, totalClicks: u.total_clicks },
     cases: listCases(),
@@ -120,7 +122,7 @@ app.get('/api/referrals', async (req) => {
   return getReferralStats(req.tgUser.id);
 });
 
-app.post('/api/referrals/claim', async (_req, reply) => reply.code(410).send({error: 'TAPS_AND_GAMES_ONLY'}));
+app.post<{Body: {milestone: number}}>('/api/referrals/claim', async (req) => claimReferralMilestone(req.tgUser.id, req.body.milestone));
 
 await app.register(giftsRoutes);
 

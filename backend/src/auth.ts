@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 
 export interface TgUser {
   id: number;
+  referrerId?: number;
   first_name: string;
   last_name?: string;
   username?: string;
@@ -50,7 +51,9 @@ export function validateInitData(
   try {
     const user = JSON.parse(userRaw) as TgUser;
     if (typeof user.id !== 'number') throw new Error();
-    return user;
+    const referral = /^ref_([1-9][0-9]{0,15})$/.exec(params.get('start_param') ?? '');
+    const referrerId = Number(referral?.[1]);
+    return {...user, referrerId: Number.isSafeInteger(referrerId) ? referrerId : undefined};
   } catch {
     throw new AuthError('Bad user payload');
   }

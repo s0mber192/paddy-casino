@@ -177,28 +177,31 @@ const upsertStmt = db.prepare(`
 `);
 const getUserStmt = db.prepare<[number], UserRow>(`SELECT * FROM users WHERE telegram_id = ?`);
 
-export function upsertUser(u: TgUser): UserRow {
-  upsertStmt.run({
-    id: u.id,
-    username: u.username ?? null,
-    first_name: u.first_name,
-    now: Date.now(),
-  });
+export const upsertUser = db.transaction((u: TgUser): UserRow => {
+  const isNew = !getUserStmt.get(u.id);
+  upsertStmt.run({id: u.id, username: u.username ?? null, first_name: u.first_name, now: Date.now()});
+  const referrer = u.referrerId;
+  if (isNew && referrer && referrer !== u.id && getUserStmt.get(referrer)) {
+    db.prepare('UPDATE users SET referrer_id=? WHERE telegram_id=?').run(referrer, u.id);
+  }
   return getUserStmt.get(u.id)!;
-}
+}).immediate;
+
+const giftCases = [
+  {slug:'starter-gifts', name:'Первый дроп', theme:'starter', price:650, gifts:['59','199','200','143']},
+  {slug:'halloween-gifts', name:'Хэллоуин', theme:'halloween', price:1550, gifts:['79','71','48','60']},
+  {slug:'cosmic-gifts', name:'Космос', theme:'cosmic', price:3500, gifts:['143','145','40','150']},
+  {slug:'premium-gifts', name:'Витрина люкс', theme:'premium', price:14500, gifts:['62','64','40','150']},
+];
+const giftCaseWeights = [65,25,9,1];
+const saveCase = db.prepare('INSERT OR IGNORE INTO cases(slug,name,price_coins,image_url,loot) VALUES(?,?,?,?,?)');
+for (const item of giftCases) saveCase.run(item.slug,item.name,item.price,'', '[]');
 
 export function listCases() {
-  const rows = db.prepare<[], CaseRow>(`SELECT * FROM cases ORDER BY price_coins ASC, price_stars ASC`).all();
-  return rows.map((c) => ({
-    id: c.id,
-    slug: c.slug,
-    name: c.name,
-    price_coins: c.price_coins,
-    price_stars: c.price_stars,
-    currency: c.currency,
-    image_url: c.image_url,
-    rewards: (JSON.parse(c.loot) as LootItem[]).map((l) => l.reward),
-  }));
+  return giftCases.map(item => {
+    const row = db.prepare<[string], CaseRow>('SELECT * FROM cases WHERE slug=?').get(item.slug)!;
+    return {id:row.id, name:item.name, theme:item.theme, price_coins:item.price, giftIds:item.gifts};
+  });
 }
 
 const clickStmt = db.prepare(`
@@ -216,37 +219,26 @@ export function registerClick(telegramId: number, reward: number, minIntervalMs:
   return { balance: u.balance, totalClicks: u.total_clicks, earned: reward };
 }
 
-function rollLoot(loot: LootItem[]): number {
-  const total = loot.reduce((s, l) => s + l.weight, 0);
-  let r = crypto.randomInt(total);
-  for (const item of loot) {
-    if (r < item.weight) return item.reward;
-    r -= item.weight;
-  }
-  return loot[loot.length - 1].reward;
-}
-
 export const openCase = db.transaction((telegramId: number, caseId: number) => {
   assertAmount(caseId);
-  const c = db.prepare<[number], CaseRow>(`SELECT * FROM cases WHERE id = ?`).get(caseId);
-  if (!c) throw new GameError('CASE_NOT_FOUND', 404);
-
-
-
+  const item = listCases().find(entry => entry.id === caseId);
+  if (!item) throw new GameError('CASE_NOT_FOUND', 404);
   const user = getUserStmt.get(telegramId);
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
-  if (user.balance < c.price_coins) throw new GameError('INSUFFICIENT_FUNDS', 402);
+  if (user.balance < item.price_coins) throw new GameError('INSUFFICIENT_FUNDS', 402);
 
-  const reward = rollLoot(JSON.parse(c.loot) as LootItem[]);
-
-  db.prepare(`UPDATE users SET balance = balance - ? + ? WHERE telegram_id = ?`)
-    .run(c.price_coins, reward, telegramId);
-  db.prepare(
-    `INSERT INTO case_openings (telegram_id, case_id, price, reward, created_at) VALUES (?, ?, ?, ?, ?)`,
-  ).run(telegramId, c.id, c.price_coins, String(reward), Date.now());
-
-  return { reward, price: c.price_coins, balance: getUserStmt.get(telegramId)!.balance };
-});
+  const roll = crypto.randomInt(100);
+  let cumulative = 0;
+  const index = giftCaseWeights.findIndex(weight => roll < (cumulative += weight));
+  const giftId = item.giftIds[index];
+  const now = Date.now();
+  db.prepare('UPDATE users SET balance=balance-? WHERE telegram_id=?').run(item.price_coins, telegramId);
+  const cardId = Number(db.prepare('INSERT INTO collection_cards(telegram_id,gift_id,created_at) VALUES(?,?,?)')
+    .run(telegramId, giftId, now).lastInsertRowid);
+  db.prepare('INSERT INTO case_openings(telegram_id,case_id,price,reward,created_at) VALUES(?,?,?,?,?)')
+    .run(telegramId, caseId, item.price_coins, 'gift:' + giftId, now);
+  return {giftId, cardId, balance:user.balance - item.price_coins};
+}).immediate;
 
 export function spinWheel(telegramId: number) {
   const user = getUserStmt.get(telegramId);
@@ -286,33 +278,22 @@ export const standardUpgrade = db.transaction((telegramId: number, bet: number, 
   return { win, newBalance: getUserStmt.get(telegramId)!.balance, bet, target: price, chancePercent: winningTickets / 10_000, cardId };
 });
 
-export function mysteryUpgrade(telegramId: number, bet: number) {
+export const mysteryUpgrade = db.transaction((telegramId: number, bet: number) => {
   const user = getUserStmt.get(telegramId);
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
   if (user.balance < bet) throw new GameError('INSUFFICIENT_FUNDS', 402);
   if (bet <= 0) throw new GameError('BAD_AMOUNT', 400);
 
   assertAmount(bet);
-  const minWin = Math.floor(bet / 10);
-  const maxWin = Math.floor(bet * 10);
-  const winAmount = crypto.randomInt(minWin, maxWin + 1);
+  const roll = crypto.randomInt(1000);
+  const percent = roll < 450 ? 20 : roll < 750 ? 60 : roll < 900 ? 100 : roll < 980 ? 200 : roll < 998 ? 400 : 1000;
+  const winAmount = Math.floor(bet * percent / 100);
   const profit = winAmount - bet;
-  const newBalance = user.balance - bet + winAmount;
-
-  db.prepare(`UPDATE users SET balance = ? WHERE telegram_id = ?`).run(newBalance, telegramId);
-
-  return { winAmount, newBalance, profit };
-}
-
-// РЕФЕРАЛКА: приветственный бонус новому игроку
-export function claimReferral(telegramId: number, referrerId: number) {
-  const user = getUserStmt.get(telegramId);
-  if (!user || user.referrer_id !== null || telegramId === referrerId) return;
-  
-  const welcomeBonus = 1000;
-  db.prepare(`UPDATE users SET referrer_id = ? WHERE telegram_id = ?`).run(referrerId, telegramId);
-  db.prepare(`UPDATE users SET balance = balance + ? WHERE telegram_id = ?`).run(welcomeBonus, telegramId);
-}
+  const newBalance = user.balance + profit;
+  if (!Number.isSafeInteger(newBalance)) throw new GameError('BALANCE_LIMIT');
+  db.prepare('UPDATE users SET balance=? WHERE telegram_id=?').run(newBalance, telegramId);
+  return {winAmount, newBalance, profit, multiplier:percent / 100};
+}).immediate;
 
 // РЕФЕРАЛКА: статистика и рубежи
 export function getReferralStats(telegramId: number) {
@@ -332,7 +313,7 @@ export function getReferralStats(telegramId: number) {
 }
 
 // РЕФЕРАЛКА: забрать награду за рубеж
-export function claimReferralMilestone(telegramId: number, milestone: number) {
+export const claimReferralMilestone = db.transaction((telegramId: number, milestone: number) => {
   const m = REFERRAL_MILESTONES.find(x => x.count === milestone);
   if (!m) throw new GameError('INVALID_MILESTONE', 400);
   
@@ -345,11 +326,12 @@ export function claimReferralMilestone(telegramId: number, milestone: number) {
   const existing = db.prepare(`SELECT 1 FROM referral_claims WHERE telegram_id = ? AND milestone = ?`).get(telegramId, milestone);
   if (existing) throw new GameError('ALREADY_CLAIMED', 400);
   
+  if (user.balance > Number.MAX_SAFE_INTEGER - m.reward) throw new GameError('BALANCE_LIMIT');
   db.prepare(`INSERT INTO referral_claims (telegram_id, milestone, claimed_at) VALUES (?, ?, ?)`).run(telegramId, milestone, Date.now());
   db.prepare(`UPDATE users SET balance = balance + ? WHERE telegram_id = ?`).run(m.reward, telegramId);
   
   return { success: true, reward: m.reward, newBalance: getUserStmt.get(telegramId)!.balance };
-}
+}).immediate;
 
 // Collection edition: all costs are earned game points, never Telegram Stars.
 db.exec(`

@@ -288,3 +288,37 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 @keyframes mystery-pulse {to{transform:scale(.9);filter:brightness(1.35)}}
 @keyframes mystery-pop {from{transform:scale(.74);opacity:.4}to{transform:scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce) {.mystery-stage .mystery-orbit,.mystery-stage .mystery-core {animation:none!important}.upgrade-needle{transition:none}}
+
+.collection-app .tap {background:radial-gradient(circle,#47331a,#191621 72%);border-color:#7c592b}
+.paddy-coin {display:grid;place-content:center;width:79%;aspect-ratio:1;border-radius:50%;border:8px double #ffe28d;background:radial-gradient(circle at 35% 24%,#ffec9a,#e7a629 58%,#9f5418);box-shadow:0 9px 0 #834315,inset 0 0 18px #a3611c,0 14px 30px #0008;color:#733c10;font-size:68px;font-weight:900;text-shadow:0 2px #ffe79c;line-height:.9}
+.paddy-coin small {font-size:14px;letter-spacing:.2em;margin-top:12px}
+.mode-collection {grid-column:1/-1;background:linear-gradient(120deg,#aa4a24,#dc8328)}
+.mode-tile .mode-art {font-size:clamp(40px,13vw,70px);filter:drop-shadow(0 9px 12px #0005)}
+.collection-case-grid .case-cover {position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 1fr;aspect-ratio:1;overflow:hidden;padding:8%;background:radial-gradient(circle,#29816c,#102b2b 75%)}
+.collection-case-grid .case-halloween {background:radial-gradient(circle,#a85824,#2f103f 75%)}
+.collection-case-grid .case-cosmic {background:radial-gradient(circle,#5547ba,#121833 75%)}
+.collection-case-grid .case-premium {background:radial-gradient(circle,#ad7a24,#361634 75%)}
+.case-cover div {min-width:0;min-height:0;filter:drop-shadow(0 4px 8px #0005)}
+.collection-strip img {width:44px;height:44px;object-fit:contain}
+.collection-strip strong {font-size:11px;text-align:center}
+.referral-panel {background:linear-gradient(135deg,#34254f,#211c2f)}
+.quest-list {display:grid;gap:10px}
+.quest-row {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#242034}
+.quest-row small {display:block;margin-top:5px;color:#cab8eb}
+.quest-row .btn {margin:0;min-width:0;padding:9px 12px}
+.mystery-particles {position:absolute;inset:0;pointer-events:none}
+.mystery-particles i {position:absolute;inset:0;display:grid;justify-items:center}
+.mystery-particles i::before {content:'';width:6px;height:6px;border-radius:50%;background:#f6bfff;box-shadow:0 0 12px #e7a2ff;opacity:0}
+.mystery-stage.opening .mystery-particles {animation:mystery-spin 2s linear infinite}
+.mystery-stage.opening .mystery-particles i::before {animation:mystery-spark .65s ease-in-out infinite alternate}
+.mystery-stage.revealed .mystery-particles i::before {animation:mystery-spark .4s ease-out reverse}
+@keyframes mystery-spark {to{opacity:1;transform:translateY(-12px) scale(1.5)}}
+@media(prefers-reduced-motion:reduce){.mystery-stage .mystery-particles,.mystery-stage .mystery-particles i::before{animation:none!important}}
+
+.mode-tile .mode-art {width:86px;height:86px;display:grid;place-items:center;right:7px;top:4px}
+.mode-art img {width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 7px 9px #10082188)}
+.case-cover::before {content:'';position:absolute;inset:0;z-index:-1;background:repeating-conic-gradient(at 50% 55%,#fff2 0 6deg,transparent 6deg 25deg);opacity:.5}
+.case-cover > div:nth-child(odd) {transform:rotate(-9deg) scale(1.12)}
+.case-cover > div:nth-child(even) {transform:rotate(9deg) scale(1.12)}
+
+.mode-art img:not([hidden]) + .mode-fallback {display:none}
