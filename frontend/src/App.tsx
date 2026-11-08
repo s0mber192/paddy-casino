@@ -3,11 +3,11 @@ import {api, ApiError, hasInitData, type CardDto, type CaseDto, type GiftDto, ty
 import LottiePlayer from './LottiePlayer';
 
 const gameModes = [
-  {id: 'upgrade', title: 'Апгрейд', description: 'Выбери цель и проверь шанс', icon: '🎯', art: '150'},
-  {id: 'mystery', title: 'Мистери', description: 'Раскрой множитель', icon: '🔮', art: '40'},
-  {id: 'cases', title: 'Кейсы', description: 'Выбери свой кейс', icon: '🎁', art: '143'},
-  {id: 'wheel', title: 'Бонусное колесо', description: 'Бесплатное вращение каждый день', icon: '🎡', art: '64'},
-  {id: 'collection', title: 'Коллекции', description: 'Карточки, наборы и каталог', icon: '🗂️', art: '62'},
+  {id: 'upgrade', title: 'Апгрейд', description: 'Выбери цель и проверь шанс', icon: '🎯', art: ['150','59','40','64','164','143']},
+  {id: 'mystery', title: 'Мистери', description: 'Раскрой награду', icon: '🔮', art: ['45','61','71']},
+  {id: 'cases', title: 'Кейсы', description: 'Выбери свой кейс', icon: '🎁', art: ['143','79','62']},
+  {id: 'wheel', title: 'Бонусное колесо', description: 'Бесплатное вращение каждый день', icon: '🎡', art: ['64','56','150']},
+  {id: 'collection', title: 'Коллекции', description: 'Карточки, наборы и каталог', icon: '🗂️', art: ['62','44','145']},
 ] as const;
 type Game = typeof gameModes[number]['id'];
 type Tab = 'tap' | 'games' | 'profile';
@@ -29,7 +29,7 @@ export default function App() {
   const [limit, setLimit] = useState(20);
   const [upgradeOutcome, setUpgradeOutcome] = useState<boolean | null>(null);
   const [mysteryOpening, setMysteryOpening] = useState(false);
-  const [mysteryResult, setMysteryResult] = useState<{winAmount: number; profit: number; multiplier: number} | null>(null);
+  const [mysteryResult, setMysteryResult] = useState<{winAmount: number; profit: number} | null>(null);
   const [upgradeRotation, setUpgradeRotation] = useState(0);
   const [animatedChance, setAnimatedChance] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now);
@@ -174,7 +174,10 @@ export default function App() {
         <div className="collection-heading"><h1>Игры</h1></div>
         <div className="mode-grid">
           {gameModes.map(mode => <button key={mode.id} className={`mode-tile mode-${mode.id}`} disabled={busy} onClick={() => openGame(mode.id)}>
-            <span className="mode-art" aria-hidden="true"><img src={`/api/gifts/image/${mode.art}`} alt="" onError={e=>{e.currentTarget.hidden=true;}}/><span className="mode-fallback">{mode.icon}</span></span>
+            <span className="mode-art" aria-hidden="true">{mode.art.map((id,index)=>{
+              const gift = gifts.find(item=>item.id===id);
+              return gift && <span className="mode-gift" key={id} style={{'--angle':`${index * 360 / mode.art.length}deg`} as React.CSSProperties}><LottiePlayer url={gift.animation_url}/></span>;
+            })}</span>
             <span className="mode-copy"><strong>{mode.title}</strong><small>{mode.description}</small></span>
           </button>)}
         </div>
@@ -214,10 +217,11 @@ export default function App() {
         <div className={`mystery-stage ${mysteryOpening ? 'opening' : mysteryResult ? 'revealed' : ''}`}>
           <div className="mystery-orbit" aria-hidden="true" /><div className="mystery-particles" aria-hidden="true">{Array.from({length:8},(_,i)=><i key={i} style={{transform:`rotate(${45*i}deg)`}}/>)}</div>
           <div className="mystery-core" role="status">
-            <strong>{mysteryResult ? `×${mysteryResult.multiplier.toLocaleString('ru-RU')}` : '?'}</strong>{mysteryResult && <span>{format(mysteryResult.winAmount)} ✦</span>}
+            <strong>{mysteryResult ? `${format(mysteryResult.winAmount)} ✦` : '?'}</strong>
             <small>{mysteryOpening ? 'Раскрываем…' : mysteryResult ? `${mysteryResult.profit >= 0 ? '+' : '−'}${format(Math.abs(mysteryResult.profit))} к балансу` : 'Скрытая награда'}</small>
           </div>
         </div>
+        <p className="collection-muted">Диапазон награды: {format(Math.ceil(bet / 10))}–{format(bet * 10)} ✦</p>
         <label>Игровые звёзды
           <input className="input" type="number" min="1" max="100000000" disabled={busy} value={bet} onChange={e => {setBet(Number(e.target.value));setMysteryResult(null);}}/>
         </label>
@@ -253,6 +257,13 @@ export default function App() {
       <h2>Квесты</h2>
       <div className="quest-list">
         <div className="quest-row"><div><strong>Ежедневный бонус</strong><small>Бесплатное вращение раз в 24 часа</small></div><button className="btn" disabled={busy} onClick={()=>{setTab('games');openGame('wheel');}}>Открыть</button></div>
+        {me.quests.map(quest => <div className="quest-row" key={quest.id}>
+          <div><strong>{quest.title}</strong><small>{quest.progress}/{quest.target} · +{format(quest.reward)} ✦</small></div>
+          <button className="btn" disabled={busy || quest.claimed || quest.progress < quest.target} onClick={()=>void run(async ()=>{
+            const {reward}=await api.claimQuest(quest.id);setNotice(`Получено +${format(reward)} ✦`);
+          })}>{quest.claimed?'Получено':'Забрать'}</button>
+        </div>)}
+        <div className="quest-row"><div><strong>Поставь логотип PADDY на аватарку</strong><small>Откроется после выхода логотипа</small></div><button className="btn" disabled>Скоро</button></div>
         {me.referrals.milestones.map(m => <div className="quest-row" key={m.count}>
           <div><strong>Пригласить {m.count} друзей</strong><small>{Math.min(me.referrals.count,m.count)}/{m.count} · +{format(m.reward)} ✦</small></div>
           <button className="btn" disabled={busy || !m.available} onClick={()=>void run(async ()=>{
@@ -264,9 +275,9 @@ export default function App() {
     {tab==='games' && game==='collection' && <section className="profile-sets">
       <h2>Коллекции</h2>
       <p className="collection-muted">Собери все карточки набора, чтобы получить бонус. Открытые карточки засчитываются навсегда.</p>
-      {me.progress.sets.map(set => <section className="profile-set" key={set.id}>
+      {[...me.progress.sets].reverse().map((set, index) => <section className="profile-set" key={set.id}>
         <header>
-          <h3>Набор {set.id}</h3>
+          <h3>Набор {index + 1}</h3>
           <span>{set.giftIds.filter(id => unlocked.has(id)).length}/{set.giftIds.length}</span>
         </header>
         <p>{set.complete ? '✓ Бонус получен' : 'Бонус за набор'} · {format(set.bonus)} ✦</p>
@@ -286,6 +297,6 @@ export default function App() {
       </section>)}
     </section>}
     <nav className="bottom-nav">{([['tap','✦','Тапать'],['games','◈','Игры'],['profile','●','Профиль']] as const).map(([key,icon,title])=><button key={key} className={tab===key?'active':''} disabled={busy} onClick={()=>{setTab(key);if(key==='games')openGame(null);window.scrollTo(0,0);}}><span>{icon}</span><small>{title}</small></button>)}</nav>
-    {previewCase && <div className="modal"><div className="modal-card"><h2>{previewCase.name}</h2><div className="collection-roulette" ref={stripRef}><div className="collection-roulette-pointer"/><div className="collection-strip" style={{transform:`translateX(${offset}px)`,transition:rolling?'transform 3.5s cubic-bezier(.1,.9,.2,1)':'none'}}>{strip.map((reward,index)=><div data-prize={index} key={index}>{gifts.find(g=>g.id===reward) && <img alt="" src={`/api/gifts/image/${reward}`}/>}<strong>{gifts.find(g=>g.id===reward)?.name ?? 'Карточка'}</strong></div>)}</div></div>{caseDone?<><h3>{gifts.find(g=>g.id===caseReward)?.name ?? 'Карточка'} добавлена в коллекцию</h3><button className="btn" disabled={busy} onClick={()=>setPreviewCase(null)}>Готово</button></>:<p>Открываем…</p>}</div></div>}
+    {previewCase && <div className="modal"><div className="modal-card"><h2>{previewCase.name}</h2><div className="collection-roulette" ref={stripRef}><div className="collection-roulette-pointer"/><div className="collection-strip" style={{transform:`translateX(${offset}px)`,transition:rolling?'transform 3.5s cubic-bezier(.1,.9,.2,1)':'none'}}>{strip.map((reward,index)=><div data-prize={index} key={index}>{gifts.find(g=>g.id===reward) && <LottiePlayer url={gifts.find(g=>g.id===reward)!.animation_url} style={{width:44,height:44}}/>}<strong>{gifts.find(g=>g.id===reward)?.name ?? 'Карточка'}</strong></div>)}</div></div>{caseDone?<><h3>{gifts.find(g=>g.id===caseReward)?.name ?? 'Карточка'} добавлена в коллекцию</h3><button className="btn" disabled={busy} onClick={()=>setPreviewCase(null)}>Готово</button></>:<p>Открываем…</p>}</div></div>}
   </main>;
 }

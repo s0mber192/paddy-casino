@@ -193,6 +193,12 @@ const giftCases = [
   {slug:'cosmic-gifts', name:'Космос', theme:'cosmic', price:3500, gifts:['143','145','40','150']},
   {slug:'premium-gifts', name:'Витрина люкс', theme:'premium', price:14500, gifts:['62','64','40','150']},
 ];
+giftCases.push(
+  {slug:'sweet-gifts', name:'Сладкий стол', theme:'sweet', price:690, gifts:['133','44','155','159']},
+  {slug:'winter-gifts', name:'Зимняя сказка', theme:'winter', price:950, gifts:['36','73','39','56']},
+  {slug:'love-gifts', name:'Секрет сердца', theme:'love', price:1450, gifts:['44','58','21','78']},
+  {slug:'magic-gifts', name:'Лавка магии', theme:'magic', price:1900, gifts:['51','45','61','37']},
+);
 const giftCaseWeights = [65,25,9,1];
 const saveCase = db.prepare('INSERT OR IGNORE INTO cases(slug,name,price_coins,image_url,loot) VALUES(?,?,?,?,?)');
 for (const item of giftCases) saveCase.run(item.slug,item.name,item.price,'', '[]');
@@ -286,13 +292,14 @@ export const mysteryUpgrade = db.transaction((telegramId: number, bet: number) =
 
   assertAmount(bet);
   const roll = crypto.randomInt(1000);
-  const percent = roll < 450 ? 20 : roll < 750 ? 60 : roll < 900 ? 100 : roll < 980 ? 200 : roll < 998 ? 400 : 1000;
-  const winAmount = Math.floor(bet * percent / 100);
+  const min = Math.ceil(bet / 10);
+  const tier = roll < 900 ? [min, bet] : roll < 999 ? [bet + 1, bet * 3] : [bet * 3 + 1, bet * 10];
+  const winAmount = crypto.randomInt(tier[0], tier[1] + 1);
   const profit = winAmount - bet;
   const newBalance = user.balance + profit;
   if (!Number.isSafeInteger(newBalance)) throw new GameError('BALANCE_LIMIT');
   db.prepare('UPDATE users SET balance=? WHERE telegram_id=?').run(newBalance, telegramId);
-  return {winAmount, newBalance, profit, multiplier:percent / 100};
+  return {winAmount, newBalance, profit};
 }).immediate;
 
 // РЕФЕРАЛКА: статистика и рубежи
@@ -456,3 +463,42 @@ export const getCollectionProgress = db.transaction((telegramId: number) => {
   if (bonus) db.prepare('UPDATE users SET balance = balance + ? WHERE telegram_id = ?').run(bonus, telegramId);
   return {sets, unlocked: [...unlocked], bonus};
 });
+
+const playerQuests = [
+  {id:1, title:'Сделай 100 тапов', reward:100, target:100},
+  {id:2, title:'Открой первый кейс', reward:150, target:1},
+  {id:3, title:'Открой 5 разных карточек', reward:300, target:5},
+];
+
+db.exec(`CREATE TABLE IF NOT EXISTS player_quest_claims (
+  telegram_id INTEGER NOT NULL REFERENCES users(telegram_id),
+  quest_id INTEGER NOT NULL,
+  PRIMARY KEY (telegram_id, quest_id)
+)`);
+
+export function getPlayerQuests(telegramId: number) {
+  const user = getUserStmt.get(telegramId)!;
+  const count = (sql: string) => (db.prepare(sql).get(telegramId) as {n:number}).n;
+  const progress = [
+    user.total_clicks,
+    count('SELECT COUNT(*) AS n FROM case_openings WHERE telegram_id=?'),
+    count('SELECT COUNT(*) AS n FROM collection_discoveries WHERE telegram_id=?'),
+  ];
+  const claims = db.prepare('SELECT quest_id FROM player_quest_claims WHERE telegram_id=?')
+    .all(telegramId) as {quest_id:number}[];
+  return playerQuests.map((quest,index) => ({
+    ...quest, progress:Math.min(progress[index], quest.target),
+    claimed:claims.some(claim => claim.quest_id === quest.id),
+  }));
+}
+
+export const claimPlayerQuest = db.transaction((telegramId: number, id: number) => {
+  const user = getUserStmt.get(telegramId);
+  if (!user) throw new GameError('USER_NOT_FOUND', 404);
+  const quest = getPlayerQuests(telegramId).find(item => item.id === id);
+  if (!quest || quest.claimed || quest.progress < quest.target) throw new GameError('QUEST_UNAVAILABLE');
+  if (user.balance > Number.MAX_SAFE_INTEGER - quest.reward) throw new GameError('BALANCE_LIMIT');
+  db.prepare('INSERT INTO player_quest_claims VALUES (?,?)').run(telegramId,id);
+  db.prepare('UPDATE users SET balance=balance+? WHERE telegram_id=?').run(quest.reward,telegramId);
+  return {reward:quest.reward};
+}).immediate;

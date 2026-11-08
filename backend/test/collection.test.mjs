@@ -92,7 +92,7 @@ try {
   assert.equal((await request('/api/collection/upgrade',{cardId:owned,giftId:'164'})).statusCode,404);
   const collection=(await request('/api/me')).json();
   assert.equal(collection.config.virtualOnly,true);
-  assert.equal(collection.cases.length,4);
+  assert.equal(collection.cases.length,8);
   const starter = collection.cases[0];
   const caseBalance = balance();
   const opened = await request('/api/case/open',{caseId:starter.id});
@@ -105,8 +105,13 @@ try {
   assert.ok(afterCase.progress.unlocked.includes(giftId));
   const mystery=await request('/api/upgrade/mystery',{bet:100});
   assert.equal(mystery.statusCode,200);
-  assert.ok([.2,.6,1,2,4,10].includes(mystery.json().multiplier));
-  assert.equal(mystery.json().winAmount,100*mystery.json().multiplier);
+  assert.ok(mystery.json().winAmount >= 10 && mystery.json().winAmount <= 1000);
+  assert.equal(mystery.json().profit,mystery.json().winAmount - 100);
+  const beforeQuest=balance();
+  const quest=await request('/api/quests/claim',{id:2});
+  assert.equal(quest.statusCode,200);
+  assert.equal(balance(),beforeQuest+quest.json().reward);
+  assert.equal((await request('/api/quests/claim',{id:2})).statusCode,400);
   assert.ok(collection.progress.sets.every(set => set.giftIds.length >= 5 && set.giftIds.length <= 6));
   assert.ok(collection.progress.unlocked.includes('59'));
   const set = collection.progress.sets.find(item => item.giftIds.includes('59'));
@@ -129,6 +134,6 @@ try {
 } finally {await app.close();db.close();}
 // Reopen in a second process to execute real startup and migration again.
 const {spawnSync}=await import('node:child_process');
-const result=spawnSync(process.execPath,['--input-type=module','-e',`const {db,listCases}=await import(${JSON.stringify(new URL('../dist/db.js',import.meta.url).href)});const assert=await import('node:assert/strict');assert.default.equal(db.prepare('SELECT price FROM gift_prices WHERE gift_id=?').get('59').price,2000);assert.default.ok(db.prepare('SELECT balance FROM users WHERE telegram_id=1').get());assert.default.equal(listCases().length,4);db.close();`],{env:process.env,encoding:'utf8'});
+const result=spawnSync(process.execPath,['--input-type=module','-e',`const {db,listCases}=await import(${JSON.stringify(new URL('../dist/db.js',import.meta.url).href)});const assert=await import('node:assert/strict');assert.default.equal(db.prepare('SELECT price FROM gift_prices WHERE gift_id=?').get('59').price,2000);assert.default.ok(db.prepare('SELECT balance FROM users WHERE telegram_id=1').get());assert.default.equal(listCases().length,8);db.close();`],{env:process.env,encoding:'utf8'});
 assert.equal(result.status,0,result.stderr);
 console.log('PASS: restart retains players, current quotes and idempotent case catalog.');

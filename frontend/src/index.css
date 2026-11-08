@@ -322,3 +322,14 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .case-cover > div:nth-child(even) {transform:rotate(9deg) scale(1.12)}
 
 .mode-art img:not([hidden]) + .mode-fallback {display:none}
+
+.mode-tile .mode-art {width:106px;height:106px;top:5px;right:8px;transform:none}
+.mode-art::before {content:'';position:absolute;inset:15%;border-radius:50%;background:radial-gradient(circle,#fff5,transparent 72%);box-shadow:0 0 22px #fff3}
+.mode-upgrade .mode-art::before {background:conic-gradient(#8fffb9 0 25%,#ffffff22 25%);border:3px solid #fff5;mask:radial-gradient(transparent 49%,#000 50%)}
+.mode-gift {position:absolute;inset:29%;transform:rotate(var(--angle)) translateY(-31px) rotate(calc(-1 * var(--angle)));filter:drop-shadow(0 3px 6px #190d3688)}
+.mode-upgrade .mode-art {right:18px;top:10px;width:120px;height:120px}
+.mode-upgrade .mode-gift {inset:34%;transform:rotate(var(--angle)) translateY(-42px) rotate(calc(-1 * var(--angle)))}
+.collection-case-grid .case-sweet {background:radial-gradient(circle,#e66a98,#4a1a50 75%)}
+.collection-case-grid .case-winter {background:radial-gradient(circle,#6abfe9,#1e3266 75%)}
+.collection-case-grid .case-love {background:radial-gradient(circle,#d95884,#581838 75%)}
+.collection-case-grid .case-magic {background:radial-gradient(circle,#7846d7,#23163d 75%)}
