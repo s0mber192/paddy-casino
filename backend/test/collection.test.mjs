@@ -80,7 +80,23 @@ try {
   const collection=(await request('/api/me')).json();
   assert.equal(collection.config.virtualOnly,true);
   assert.ok(collection.cases.every(c=>c.currency==='coins' && c.price_stars===0));
+  const rich = collection.cases.find(item => item.price_coins === 8000);
+  assert.equal(Math.max(...rich.rewards), 64000);
+  assert.ok(collection.progress.sets.every(set => set.giftIds.length >= 5 && set.giftIds.length <= 6));
+  assert.ok(collection.progress.unlocked.includes('59'));
+  const set = collection.progress.sets.find(item => item.giftIds.includes('59'));
+  const beforeBonus = balance();
+  const insertCard = db.prepare('INSERT INTO collection_cards(telegram_id,gift_id,created_at) VALUES(1,?,?)');
+  for (const id of set.giftIds) {
+    if (!collection.progress.unlocked.includes(id)) insertCard.run(id, now);
+  }
+  const completed = (await request('/api/me')).json();
+  assert.ok(completed.progress.sets.find(item => item.id === set.id).complete);
+  assert.equal(completed.user.balance, beforeBonus + set.bonus);
+  assert.equal((await request('/api/me')).json().user.balance, completed.user.balance);
+  assert.equal(collection.wheelReadyAt, 0);
   assert.equal((await request('/api/wheel/spin',{})).statusCode,200);
+  assert.ok((await request('/api/me')).json().wheelReadyAt > Date.now());
   assert.equal((await request('/api/wheel/spin',{})).statusCode,429);
   assert.deepEqual(db.pragma('foreign_key_check'),[]);
   assert.equal(db.pragma('integrity_check',{simple:true}),'ok');

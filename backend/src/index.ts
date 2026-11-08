@@ -4,7 +4,7 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'node:path';
 import { AuthError, validateInitData, type TgUser } from './auth.js';
-import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, getCollection, sellCard, upgradeCard } from './db.js';
+import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
 import { giftsRoutes } from './gifts.js';
 import { startPriceRefresh } from './prices.js';
 
@@ -73,8 +73,11 @@ app.get('/health' , async () => ({ ok: true, mode: 'collection' }));
 
 app.get('/api/me', async (req) => {
   const u = upsertUser(req.tgUser);
+  const {bonus, ...progress} = getCollectionProgress.immediate(u.telegram_id);
   return {
-    user: { id: u.telegram_id, username: u.username, firstName: u.first_name, balance: u.balance, totalClicks: u.total_clicks },
+    progress,
+    wheelReadyAt: u.last_wheel_spin ? u.last_wheel_spin + 24 * 60 * 60 * 1000 : 0,
+    user: { id: u.telegram_id, username: u.username, firstName: u.first_name, balance: u.balance + bonus, totalClicks: u.total_clicks },
     cases: listCases(),
     collection: getCollection(u.telegram_id), config: { coinsPerClick: COINS_PER_CLICK, virtualOnly: true },
   };

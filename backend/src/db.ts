@@ -91,12 +91,12 @@ const seedLoot = [
     currency: 'stars',
     image_url: '/cases/space.png',
     loot: [
-      { reward: 30000, weight: 5000 },
-      { reward: 100000, weight: 3000 },
-      { reward: 500000, weight: 1000 },
-      { reward: 1000000, weight: 700 },
-      { reward: 5000000, weight: 250 },
-      { reward: 20000000, weight: 50 },
+      { reward: 2400, weight: 5000 },
+      { reward: 4800, weight: 3000 },
+      { reward: 9000, weight: 1000 },
+      { reward: 15000, weight: 700 },
+      { reward: 24000, weight: 250 },
+      { reward: 48000, weight: 50 },
     ],
   },
   {
@@ -107,12 +107,12 @@ const seedLoot = [
     currency: 'stars',
     image_url: '/cases/rich.png',
     loot: [
-      { reward: 50000, weight: 5000 },
-      { reward: 500000, weight: 3000 },
-      { reward: 2000000, weight: 1000 },
-      { reward: 5000000, weight: 700 },
-      { reward: 20000000, weight: 250 },
-      { reward: 100000000, weight: 50 },
+      { reward: 3200, weight: 5000 },
+      { reward: 6400, weight: 3000 },
+      { reward: 12000, weight: 1000 },
+      { reward: 20000, weight: 700 },
+      { reward: 32000, weight: 250 },
+      { reward: 64000, weight: 50 },
     ],
   },
   {
@@ -123,12 +123,12 @@ const seedLoot = [
     currency: 'stars',
     image_url: '/cases/18plus.png',
     loot: [
-      { reward: 50000, weight: 5000 },
-      { reward: 200000, weight: 3000 },
-      { reward: 1000000, weight: 1000 },
-      { reward: 5000000, weight: 700 },
-      { reward: 10000000, weight: 250 },
-      { reward: 50000000, weight: 50 },
+      { reward: 2800, weight: 5000 },
+      { reward: 5600, weight: 3000 },
+      { reward: 10500, weight: 1000 },
+      { reward: 17500, weight: 700 },
+      { reward: 28000, weight: 250 },
+      { reward: 56000, weight: 50 },
     ],
   },
 ];
@@ -278,11 +278,12 @@ export const standardUpgrade = db.transaction((telegramId: number, bet: number, 
   if (!user) throw new GameError('USER_NOT_FOUND', 404);
   if (user.balance < bet) throw new GameError('INSUFFICIENT_FUNDS', 402);
   const chance = Math.min(0.95, bet / price);
-  const win = crypto.randomInt(1_000_000) < Math.floor(chance * 1_000_000);
+  const winningTickets = Math.floor(chance * 1_000_000);
+  const win = crypto.randomInt(1_000_000) < winningTickets;
   db.prepare('UPDATE users SET balance = balance - ? WHERE telegram_id = ?').run(bet, telegramId);
   let cardId: number | null = null;
   if (win) cardId = Number(db.prepare('INSERT INTO collection_cards(telegram_id,gift_id,created_at) VALUES(?,?,?)').run(telegramId, giftId, Date.now()).lastInsertRowid);
-  return { win, newBalance: getUserStmt.get(telegramId)!.balance, bet, target: price, chancePercent: Math.floor(chance * 100), cardId };
+  return { win, newBalance: getUserStmt.get(telegramId)!.balance, bet, target: price, chancePercent: winningTickets / 10_000, cardId };
 });
 
 export function mysteryUpgrade(telegramId: number, bet: number) {
@@ -401,9 +402,75 @@ export const upgradeCard = db.transaction((telegramId: number, cardId: number, t
   const target = getGiftPrice(targetGiftId);
   if (target <= stake) throw new GameError('BAD_AMOUNT');
   const chance = Math.min(0.95, stake / target);
-  const win = crypto.randomInt(1_000_000) < Math.floor(chance * 1_000_000);
+  const winningTickets = Math.floor(chance * 1_000_000);
+  const win = crypto.randomInt(1_000_000) < winningTickets;
   db.prepare('DELETE FROM collection_cards WHERE id=? AND telegram_id=?').run(cardId, telegramId);
   let newCardId: number | null = null;
   if (win) newCardId = Number(db.prepare('INSERT INTO collection_cards(telegram_id,gift_id,created_at) VALUES(?,?,?)').run(telegramId, targetGiftId, Date.now()).lastInsertRowid);
-  return {win, chancePercent: Math.floor(chance * 100), cardId: newCardId};
+  return {win, chancePercent: winningTickets / 10_000, cardId: newCardId};
+});
+
+
+// Set membership is fixed so existing completion rewards keep their meaning.
+const collectionSets = [
+  ["164", "214", "3", "65", "68", "150"],
+  ["149", "13", "40", "105", "130", "64"],
+  ["62", "53", "148", "108", "129", "77"],
+  ["61", "69", "57", "101", "20", "27"],
+  ["23", "49", "1", "70", "5", "196"],
+  ["37", "47", "162", "172", "137", "153"],
+  ["215", "78", "178", "128", "21", "146"],
+  ["60", "48", "45", "66", "71", "136"],
+  ["58", "26", "56", "22", "50", "42"],
+  ["208", "72", "43", "135", "54", "24"],
+  ["144", "109", "206", "145", "147", "134"],
+  ["79", "46", "11", "158", "75", "165"],
+  ["125", "39", "156", "73", "143", "67"],
+  ["126", "52", "107", "207", "163", "112"],
+  ["81", "155", "152", "41", "51", "44"],
+  ["195", "213", "76", "63", "201", "151"],
+  ["74", "198", "35", "4", "154", "87"],
+  ["38", "28", "55", "103", "122", "36"],
+  ["133", "25", "202", "157", "102", "106"],
+  ["104", "159", "200", "199", "59"],
+];
+const collectionBonus = 1000;
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS collection_discoveries (
+    telegram_id INTEGER NOT NULL REFERENCES users(telegram_id),
+    gift_id TEXT NOT NULL,
+    PRIMARY KEY (telegram_id, gift_id)
+  );
+  CREATE TABLE IF NOT EXISTS collection_set_rewards (
+    telegram_id INTEGER NOT NULL REFERENCES users(telegram_id),
+    set_id INTEGER NOT NULL,
+    PRIMARY KEY (telegram_id, set_id)
+  );
+  CREATE TRIGGER IF NOT EXISTS remember_collection_card
+  AFTER INSERT ON collection_cards BEGIN
+    INSERT OR IGNORE INTO collection_discoveries VALUES (NEW.telegram_id, NEW.gift_id);
+  END;
+  INSERT OR IGNORE INTO collection_discoveries SELECT telegram_id, gift_id FROM collection_cards;
+`);
+
+const updateCaseLoot = db.prepare('UPDATE cases SET loot = ? WHERE slug = ? AND loot <> ?');
+for (const item of seedLoot.filter(item => ['space', 'rich', '18_plus'].includes(item.slug))) {
+  const loot = JSON.stringify(item.loot);
+  updateCaseLoot.run(loot, item.slug, loot);
+}
+
+export const getCollectionProgress = db.transaction((telegramId: number) => {
+  const discoveries = db.prepare('SELECT gift_id FROM collection_discoveries WHERE telegram_id = ?')
+    .all(telegramId) as {gift_id: string}[];
+  const unlocked = new Set(discoveries.map(item => item.gift_id));
+  const claim = db.prepare('INSERT OR IGNORE INTO collection_set_rewards VALUES (?, ?)');
+  let bonus = 0;
+  const sets = collectionSets.map((giftIds, index) => {
+    const complete = giftIds.every(id => unlocked.has(id));
+    if (complete && claim.run(telegramId, index + 1).changes) bonus += collectionBonus;
+    return {id: index + 1, giftIds, complete, bonus: collectionBonus};
+  });
+  if (bonus) db.prepare('UPDATE users SET balance = balance + ? WHERE telegram_id = ?').run(bonus, telegramId);
+  return {sets, unlocked: [...unlocked], bonus};
 });
