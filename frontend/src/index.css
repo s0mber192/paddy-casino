@@ -333,3 +333,22 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .collection-case-grid .case-winter {background:radial-gradient(circle,#6abfe9,#1e3266 75%)}
 .collection-case-grid .case-love {background:radial-gradient(circle,#d95884,#581838 75%)}
 .collection-case-grid .case-magic {background:radial-gradient(circle,#7846d7,#23163d 75%)}
+
+.collection-app {
+  --line:#ffffff20;
+  background:radial-gradient(ellipse at 96% 0%,#242829 0,transparent 34%),radial-gradient(ellipse at 8% 35%,#242019 0,transparent 42%),#111315;
+}
+.collection-app .paddy-top,.collection-app .bottom-nav {background:#17191bee}
+.collection-app .collection-panel,.collection-app .profile-set,.collection-app .collection-grid article,.collection-app .collection-case-grid article {
+  background:linear-gradient(150deg,#262728,#191b1d 70%);
+}
+.collection-app .btn {background:linear-gradient(115deg,#ffe0a0,#c59554);color:#261b11}
+.collection-app .bottom-nav button.active {background:#443727;color:#ffe0a0}
+.mode-tile {box-shadow:inset 0 1px #ffffff26,0 5px 16px #0003}
+.mode-tile::before {background:radial-gradient(circle at 84% 24%,#fff4,transparent 59%)}
+.mode-tile .mode-art::before {content:none}
+.mode-illustration {position:absolute;width:100%;height:100%;filter:drop-shadow(0 5px 8px #09090b8c)}
+.mode-tile:not(.mode-upgrade) .mode-gift {inset:38%;transform:rotate(var(--angle)) translateY(-39px) rotate(calc(-1 * var(--angle)))}
+.album-switch {display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:12px 0 18px;border:1px solid var(--line);border-radius:14px;background:#101213}
+.album-switch button {border:0;border-radius:10px;padding:12px;background:transparent;color:#c6c1b7;font:inherit;font-weight:700;cursor:pointer}
+.album-switch button[aria-pressed=true] {background:#443727;color:#ffe0a0}

@@ -11,6 +11,32 @@ const gameModes = [
 ] as const;
 type Game = typeof gameModes[number]['id'];
 type Tab = 'tap' | 'games' | 'profile';
+function ModeIllustration({mode}: {mode: Game}) {
+  return <svg className="mode-illustration" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+    {mode === 'collection' && <g transform="rotate(-12 60 60)">
+      <rect x="27" y="24" width="70" height="77" rx="10" fill="#2a1728" stroke="#ffbb73" strokeWidth="3"/>
+      <path d="M39 24v77M47 33h42" stroke="#ffbb73" strokeWidth="3"/>
+      <rect x="49" y="43" width="34" height="40" rx="5" fill="#a4524a" stroke="#ffdba7"/>
+      <path d="m66 49 11 14-11 13-11-13z" fill="#ffcf8f"/>
+    </g>}
+    {(mode === 'upgrade' || mode === 'wheel') && <>
+      <circle cx="60" cy="60" r="42" fill="#142520" stroke="#e9c783" strokeWidth="4"/>
+      <circle cx="60" cy="60" r="34" stroke="#fff5cf" strokeWidth="7" strokeDasharray={mode==='upgrade'?'58 156':'15 11'}/>
+      <circle cx="60" cy="60" r="22" stroke="#e9c783" opacity=".45"/>
+      <path d="m54 14 6 13 6-13z" fill="#fff1bf"/>
+      <path d={mode==='upgrade'?'m49 66 11-17 11 17M60 50v24':'m60 44 5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z'} stroke="#ffdf9e" strokeWidth="3" strokeLinejoin="round"/>
+    </>}
+    {mode === 'mystery' && <>
+      <circle cx="60" cy="53" r="32" fill="#30204a" stroke="#e6b5ff" strokeWidth="3"/>
+      <path d="M42 86h36l8 11H34z" fill="#9368b4" stroke="#e6b5ff"/>
+      <path d="m60 34 5 14 14 5-14 5-5 14-5-14-14-5 14-5z" fill="#e6b5ff"/>
+    </>}
+    {mode === 'cases' && <>
+      <rect x="26" y="48" width="68" height="43" rx="8" fill="#24445c" stroke="#bceaff" strokeWidth="3"/>
+      <path d="m26 51 12-24h44l12 24M26 62h68M55 62v13h10V62" stroke="#bceaff" strokeWidth="3" strokeLinejoin="round"/>
+    </>}
+  </svg>;
+}
 const format = (value: number) => value.toLocaleString('ru-RU');
 const errors: Record<string,string> = {INSUFFICIENT_FUNDS: 'Не хватает игровых звёзд. Натапай ещё!', WHEEL_COOLDOWN: 'Колесо доступно раз в 24 часа.', BAD_AMOUNT: 'Проверь сумму: нужно положительное целое число.', BAD_REQUEST: 'Проверь введённые данные.', CARD_NOT_FOUND: 'Карточка уже продана. Коллекция обновлена.', UNAUTHORIZED: 'Сессия истекла. Открой приложение заново.'};
 export default function App() {
@@ -25,6 +51,7 @@ export default function App() {
   const [giftId, setGiftId] = useState('');
   const [sourceCard, setSourceCard] = useState<CardDto | null>(null);
   const [game, setGame] = useState<Game | null>(null);
+  const [collectionView, setCollectionView] = useState<'album' | 'catalog'>('album');
   const [search, setSearch] = useState('');
   const [limit, setLimit] = useState(20);
   const [upgradeOutcome, setUpgradeOutcome] = useState<boolean | null>(null);
@@ -174,7 +201,7 @@ export default function App() {
         <div className="collection-heading"><h1>Игры</h1></div>
         <div className="mode-grid">
           {gameModes.map(mode => <button key={mode.id} className={`mode-tile mode-${mode.id}`} disabled={busy} onClick={() => openGame(mode.id)}>
-            <span className="mode-art" aria-hidden="true">{mode.art.map((id,index)=>{
+            <span className="mode-art" aria-hidden="true"><ModeIllustration mode={mode.id}/>{mode.art.map((id,index)=>{
               const gift = gifts.find(item=>item.id===id);
               return gift && <span className="mode-gift" key={id} style={{'--angle':`${index * 360 / mode.art.length}deg`} as React.CSSProperties}><LottiePlayer url={gift.animation_url}/></span>;
             })}</span>
@@ -239,8 +266,14 @@ export default function App() {
       </button></div>}
       {result && <div className="collection-result" role="status">{result}</div>}
     </section>}
-    {tab==='games' && game==='collection' && <section><div className="collection-heading"><h1>Моя коллекция</h1><span>{me.collection.length} карточек</span></div>{me.collection.length===0?<div className="collection-panel"><span className="collection-large">◇</span><h2>Первая карточка впереди</h2><p>Натапай звёзды и попробуй апгрейд.</p><button className="btn" onClick={()=>{setTab('games');openGame('upgrade');}}>К апгрейду</button></div>:<div className="collection-grid">{me.collection.map(card=>{const gift=gifts.find(g=>g.id===card.giftId);return <article key={card.id}><div className="collection-card-art">{gift && <LottiePlayer url={gift.animation_url}/>}</div><h3>{gift?.name??'Карточка'}</h3><p>{format(gift?.price_stars??0)} игровых ✦</p><small>{gift && priceText(gift)}</small><button className="collection-link" disabled={busy || !gift} onClick={()=>{setSourceCard(card);setTab('games');openGame('upgrade');setResult('');}}>Улучшить карточку →</button><button className="btn" disabled={busy || !gift} onClick={()=>sell(card)}>Продать за игровые ✦</button></article>;})}</div>}
-      <div className="collection-heading"><h2>Каталог подарков</h2><span>{fresh}/{gifts.length} актуальных цен</span></div><p className="collection-muted">Изображения подарков используются как виртуальные карточки. Рыночная цена служит ориентиром игровой стоимости. Никаких реальных активов.</p><input className="input" aria-label="Найти карточку" placeholder="Найти карточку…" value={search} onChange={e=>{setSearch(e.target.value);setLimit(20);}}/><div className="collection-grid">{sorted.slice(0,limit).map(g=><article key={g.id}><div className="collection-card-art"><LottiePlayer url={g.animation_url}/></div><h3>{g.name}</h3><p>{format(g.price_stars)} ✦</p><small>{priceText(g)}</small><button className="collection-link" onClick={()=>{setGiftId(g.id);openGame('upgrade');setTab('games');}}>Выбрать для апгрейда →</button></article>)}</div>{limit<sorted.length && <button className="btn" onClick={()=>setLimit(v=>v+20)}>Показать ещё</button>}</section>}
+    {tab==='games' && game==='collection' && <div className="album-switch" role="group" aria-label="Раздел коллекций">
+      <button aria-pressed={collectionView==='album'} onClick={()=>setCollectionView('album')}>Альбом</button>
+      <button aria-pressed={collectionView==='catalog'} onClick={()=>setCollectionView('catalog')}>Каталог</button>
+    </div>}
+    {tab==='games' && game==='collection' && collectionView==='album' && <section><div className="collection-heading"><h1>Моя коллекция</h1><span>{me.collection.length} карточек</span></div>{me.collection.length===0?<div className="collection-panel"><span className="collection-large">◇</span><h2>Первая карточка впереди</h2><p>Натапай звёзды и попробуй апгрейд.</p><button className="btn" onClick={()=>{setTab('games');openGame('upgrade');}}>К апгрейду</button></div>:<div className="collection-grid">{me.collection.map(card=>{const gift=gifts.find(g=>g.id===card.giftId);return <article key={card.id}><div className="collection-card-art">{gift && <LottiePlayer url={gift.animation_url}/>}</div><h3>{gift?.name??'Карточка'}</h3><p>{format(gift?.price_stars??0)} игровых ✦</p><small>{gift && priceText(gift)}</small><button className="collection-link" disabled={busy || !gift} onClick={()=>{setSourceCard(card);setTab('games');openGame('upgrade');setResult('');}}>Улучшить карточку →</button><button className="btn" disabled={busy || !gift} onClick={()=>sell(card)}>Продать за игровые ✦</button></article>;})}</div>}
+    </section>}
+    {tab==='games' && game==='collection' && collectionView==='catalog' && <section>
+      <div className="collection-heading"><h2>Каталог подарков</h2><span>{fresh}/{gifts.length} актуальных цен</span></div><p className="collection-muted">Изображения подарков используются как виртуальные карточки. Рыночная цена служит ориентиром игровой стоимости. Никаких реальных активов.</p><input className="input" aria-label="Найти карточку" placeholder="Найти карточку…" value={search} onChange={e=>{setSearch(e.target.value);setLimit(20);}}/><div className="collection-grid">{sorted.slice(0,limit).map(g=><article key={g.id}><div className="collection-card-art"><LottiePlayer url={g.animation_url}/></div><h3>{g.name}</h3><p>{format(g.price_stars)} ✦</p><small>{priceText(g)}</small><button className="collection-link" onClick={()=>{setSourceCard(null);setGiftId(g.id);openGame('upgrade');setTab('games');}}>Выбрать для апгрейда →</button></article>)}</div>{limit<sorted.length && <button className="btn" onClick={()=>setLimit(v=>v+20)}>Показать ещё</button>}</section>}
     {tab==='profile' && <section className="profile-sets">
       <div className="collection-panel"><h1>{me.user.firstName}</h1>
         {me.user.username && <p>@{me.user.username}</p>}
@@ -272,7 +305,7 @@ export default function App() {
         </div>)}
       </div>
     </section>}
-    {tab==='games' && game==='collection' && <section className="profile-sets">
+    {tab==='games' && game==='collection' && collectionView==='album' && <section className="profile-sets">
       <h2>Коллекции</h2>
       <p className="collection-muted">Собери все карточки набора, чтобы получить бонус. Открытые карточки засчитываются навсегда.</p>
       {[...me.progress.sets].reverse().map((set, index) => <section className="profile-set" key={set.id}>
