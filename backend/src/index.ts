@@ -4,7 +4,7 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'node:path';
 import { AuthError, validateInitData, type TgUser } from './auth.js';
-import { GameError, listCases, openCase, registerClick, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, claimReferralMilestone, getPlayerQuests, claimPlayerQuest, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
+import { GameError, listCases, openCase, registerClick, getClicker, improveClicker, getRocket, launchRocket, cashRocket, upsertUser, spinWheel, standardUpgrade, mysteryUpgrade, getReferralStats, claimReferralMilestone, getPlayerQuests, claimPlayerQuest, getCollection, getCollectionProgress, sellCard, upgradeCard } from './db.js';
 import { giftsRoutes } from './gifts.js';
 import { startPriceRefresh } from './prices.js';
 
@@ -14,7 +14,6 @@ if (!BOT_TOKEN) throw new Error('BOT_TOKEN is not set');
 const PORT = Number(process.env.PORT ?? 3000);
 const HOST = process.env.HOST ?? '0.0.0.0';
 const COINS_PER_CLICK = Number(process.env.COINS_PER_CLICK ?? 1);
-const MIN_CLICK_INTERVAL_MS = Number(process.env.MIN_CLICK_INTERVAL_MS ?? 50);
 const INIT_DATA_MAX_AGE_SEC = Number(process.env.INIT_DATA_MAX_AGE_SEC ?? 86400);
 
 declare module 'fastify' {
@@ -58,6 +57,9 @@ app.setErrorHandler((err, req, reply) => {
 
 const integer = {type: 'integer', minimum: 1, maximum: 100_000_000};
 const schemas: Record<string, Record<string, unknown>> = {
+  '/api/clicker/improve': {action:{type:'string',enum:['power','bear','collect']}},
+  '/api/rocket/launch': {cardId:integer},
+  '/api/rocket/cash': {launched:{type:'integer', minimum:1, maximum:Number.MAX_SAFE_INTEGER}},
   '/api/quests/claim': {id: integer},
   '/api/referrals/claim': {milestone: integer},
   '/api/case/open': {caseId: integer},
@@ -78,6 +80,8 @@ app.get('/api/me', async (req) => {
   const {bonus, ...progress} = getCollectionProgress.immediate(u.telegram_id);
   return {
     progress,
+    clicker: getClicker(u.telegram_id,COINS_PER_CLICK),
+    rocket: getRocket(u.telegram_id),
     quests: getPlayerQuests(u.telegram_id),
     referrals: getReferralStats(u.telegram_id),
     wheelReadyAt: u.last_wheel_spin ? u.last_wheel_spin + 24 * 60 * 60 * 1000 : 0,
@@ -87,10 +91,19 @@ app.get('/api/me', async (req) => {
   };
 });
 
-app.post('/api/click', async (req) => {
+app.post<{Body: {count?:number}}>('/api/click', {
+  schema:{body:{type:'object',additionalProperties:false,properties:{count:{type:'integer',minimum:1,maximum:12}}}},
+}, async req => {
   upsertUser(req.tgUser);
-  return registerClick(req.tgUser.id, COINS_PER_CLICK, MIN_CLICK_INTERVAL_MS);
+  return registerClick(req.tgUser.id,COINS_PER_CLICK,req.body?.count ?? 1);
 });
+app.post<{Body: {action:'power'|'bear'|'collect'}}>('/api/clicker/improve', async req => {
+  upsertUser(req.tgUser);
+  return improveClicker(req.tgUser.id,req.body.action,COINS_PER_CLICK);
+});
+app.get('/api/rocket',async req => getRocket(req.tgUser.id));
+app.post<{Body: {cardId:number}}>('/api/rocket/launch',async req => launchRocket(req.tgUser.id,req.body.cardId));
+app.post<{Body: {launched:number}}>('/api/rocket/cash',async req => cashRocket(req.tgUser.id,req.body.launched));
 
 app.post<{ Body: { caseId: number } }>('/api/case/open', async (req) => {
   upsertUser(req.tgUser);

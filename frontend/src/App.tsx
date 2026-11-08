@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {api, ApiError, hasInitData, type CardDto, type CaseDto, type GiftDto, type MeResponse} from './api';
+import {api, ApiError, hasInitData, type CardDto, type CaseDto, type GiftDto, type MeResponse, type Rocket} from './api';
 import LottiePlayer from './LottiePlayer';
 
 const gameModes = [
@@ -7,6 +7,7 @@ const gameModes = [
   {id: 'mystery', title: 'Мистери', description: 'Раскрой награду', icon: '🔮', art: ['45','61','71']},
   {id: 'cases', title: 'Кейсы', description: 'Выбери свой кейс', icon: '🎁', art: ['143','79','62']},
   {id: 'wheel', title: 'Бонусное колесо', description: 'Бесплатное вращение каждый день', icon: '🎡', art: ['64','56','150']},
+  {id: 'rocket', title: 'Ракета', description: 'Запусти полёт с карточкой', art: ['143','145','40']},
   {id: 'collection', title: 'Коллекции', description: 'Карточки, наборы и каталог', icon: '🗂️', art: ['62','44','145']},
 ] as const;
 type Game = typeof gameModes[number]['id'];
@@ -31,6 +32,11 @@ function ModeIllustration({mode}: {mode: Game}) {
       <path d="M42 86h36l8 11H34z" fill="#9368b4" stroke="#e6b5ff"/>
       <path d="m60 34 5 14 14 5-14 5-5 14-5-14-14-5 14-5z" fill="#e6b5ff"/>
     </>}
+    {mode === 'rocket' && <g transform="rotate(28 60 60)">
+      <path d="M60 13C45 25 41 50 46 79h28c5-29 1-54-14-66Z" fill="#c2ecff" stroke="#fff" strokeWidth="3"/>
+      <circle cx="60" cy="48" r="9" fill="#264965"/>
+      <path d="M47 61 34 84l13-6m26-17 13 23-13-6M53 84l7 24 7-24" fill="#ffc377"/>
+    </g>}
     {mode === 'cases' && <>
       <rect x="26" y="48" width="68" height="43" rx="8" fill="#24445c" stroke="#bceaff" strokeWidth="3"/>
       <path d="m26 51 12-24h44l12 24M26 62h68M55 62v13h10V62" stroke="#bceaff" strokeWidth="3" strokeLinejoin="round"/>
@@ -38,7 +44,7 @@ function ModeIllustration({mode}: {mode: Game}) {
   </svg>;
 }
 const format = (value: number) => value.toLocaleString('ru-RU');
-const errors: Record<string,string> = {INSUFFICIENT_FUNDS: 'Не хватает игровых звёзд. Натапай ещё!', WHEEL_COOLDOWN: 'Колесо доступно раз в 24 часа.', BAD_AMOUNT: 'Проверь сумму: нужно положительное целое число.', BAD_REQUEST: 'Проверь введённые данные.', CARD_NOT_FOUND: 'Карточка уже продана. Коллекция обновлена.', UNAUTHORIZED: 'Сессия истекла. Открой приложение заново.'};
+const errors: Record<string,string> = {TOO_FAST: 'Достигнут лимит скорости тапов.', NO_OFFLINE_REWARD: 'Медведи ещё копят звёзды.', ROCKET_ACTIVE: 'Полёт уже идёт.', INSUFFICIENT_FUNDS: 'Не хватает игровых звёзд. Натапай ещё!', WHEEL_COOLDOWN: 'Колесо доступно раз в 24 часа.', BAD_AMOUNT: 'Проверь сумму: нужно положительное целое число.', BAD_REQUEST: 'Проверь введённые данные.', CARD_NOT_FOUND: 'Карточка уже продана. Коллекция обновлена.', UNAUTHORIZED: 'Сессия истекла. Открой приложение заново.'};
 export default function App() {
   const [tab, setTab] = useState<Tab>('tap');
   const [me, setMe] = useState<MeResponse | null>(null);
@@ -51,6 +57,13 @@ export default function App() {
   const [giftId, setGiftId] = useState('');
   const [sourceCard, setSourceCard] = useState<CardDto | null>(null);
   const [game, setGame] = useState<Game | null>(null);
+  const [albumPage, setAlbumPage] = useState(0);
+  const [rocketCard, setRocketCard] = useState('');
+  const [rocket, setRocket] = useState<Rocket|null>(null);
+  const [flightFactor, setFlightFactor] = useState(1);
+  const tapQueue = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tapping = useRef(false);
   const [collectionView, setCollectionView] = useState<'album' | 'catalog'>('album');
   const [search, setSearch] = useState('');
   const [limit, setLimit] = useState(20);
@@ -103,7 +116,66 @@ export default function App() {
       if (mounted.current) setBusy(false);
     }
   };
-  const tap = () => void run(async () => {await api.click(); window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');});
+  const scheduleTaps = () => {
+    if (tapTimer.current || tapping.current) return;
+    tapTimer.current = setTimeout(() => {
+      tapTimer.current = null;
+      if (!mounted.current) return;
+      if (lock.current) {scheduleTaps();return;}
+      tapping.current = true;
+      void run(async () => {
+        try {
+          while (tapQueue.current && mounted.current) {
+            const count = Math.min(12,tapQueue.current);
+            tapQueue.current -= count;
+            const response = await api.click(count);
+            setMe(current => current && ({...current,user:{...current.user,balance:response.balance,totalClicks:response.totalClicks}}));
+            if (response.accepted < count) {setNotice('Достигнут лимит скорости тапов.');break;}
+          }
+        } finally {tapQueue.current = 0;}
+      }).finally(() => {
+        tapping.current = false;
+        if (tapQueue.current && mounted.current) scheduleTaps();
+      });
+    },120);
+  };
+  const tap = () => {
+    if (lock.current && !tapping.current) return;
+    tapQueue.current += 1;
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+    scheduleTaps();
+  };
+
+  useEffect(() => {
+    if (game !== 'rocket' || tab !== 'games') return;
+    let current = true;
+    let pending = false;
+    const poll = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const state = await api.rocket();
+        if (current) setRocket(previous => {
+          if (previous && (!state || state.launched < previous.launched ||
+            (state.launched === previous.launched && previous.status !== 'flying' && state.status === 'flying'))) return previous;
+          return state;
+        });
+      } catch {} finally {pending = false;}
+    };
+    void poll();
+    const timer = setInterval(poll,400);
+    return () => {current = false;clearInterval(timer);};
+  },[game,tab]);
+
+  useEffect(() => {
+    if (!rocket || rocket.status !== 'flying') {setFlightFactor(rocket?.multiplier ?? 1);return;}
+    const received = performance.now();
+    const timer = setInterval(() => {
+      const elapsed = rocket.now - rocket.launched + performance.now() - received;
+      setFlightFactor(Math.min(20,Math.exp(elapsed / 4500)));
+    },40);
+    return () => clearInterval(timer);
+  },[rocket]);
   const selected = gifts.find(g => g.id === giftId);
   const sourceGift = sourceCard && gifts.find(g => g.id === sourceCard.giftId);
   const stake = sourceGift ? sourceGift.price_stars : bet;
@@ -184,6 +256,7 @@ export default function App() {
     .map(value => String(value).padStart(2, '0')).join(':');
   const unlocked = new Set(me.progress.unlocked);
   const sorted = [...gifts].filter(g => g.name.toLowerCase().includes(search.toLowerCase())).sort((a,b) => a.price_stars-b.price_stars);
+  const albumSets = [...me.progress.sets].reverse();
   const fresh = gifts.filter(g => !g.price_stale).length;
   const priceText = (gift: GiftDto) => gift.price_updated_at ? `${gift.price_source.toUpperCase()} · ${new Date(gift.price_updated_at).toLocaleString('ru-RU')} ${gift.price_stale ? '· устарела' : ''}` : 'Справочная цена · живой источник не подключён';
   return <main className="screen collection-app">
@@ -195,7 +268,19 @@ export default function App() {
       <div className="paddy-wallet"><small>Игровые звёзды</small><strong>✦ {format(me.user.balance)}</strong></div>
     </header>
     {notice && <div className="collection-notice" role="status">{notice}<button aria-label="Закрыть уведомление" onClick={() => setNotice('')}>×</button></div>}
-    {tab === 'tap' && <section className="collection-tap-page"><h1>Кликер</h1><button className="tap" disabled={busy} onClick={tap} aria-label="Заработать игровые звёзды"><span className="paddy-coin" aria-hidden="true">✦<small>PADDY</small></span></button><p>+{me.config.coinsPerClick} ✦ за тап · всего {format(me.user.totalClicks)}</p><button className="btn" onClick={() => {setTab('games');openGame('upgrade');}}>Перейти к апгрейду →</button><button className="collection-link" onClick={() => {setTab('games');openGame('wheel');}}>🎁 Ежедневное колесо{wheelRemaining ? ` · ${wheelCountdown}` : ' · бонус доступен'}</button><div className="collection-tip">Карточки — виртуальные изображения. Их нельзя вывести или получить как настоящие подарки.</div></section>}
+    {tab === 'tap' && <section className="collection-tap-page"><h1>Кликер</h1>
+      <button className="tap" onClick={tap} aria-label="Заработать игровые звёзды"><span className="paddy-coin" aria-hidden="true">✦<small>PADDY</small></span></button>
+      <p>+{me.clicker.perTap} ✦ за тап · всего {format(me.user.totalClicks)}</p>
+      <div className="clicker-upgrades">
+        <article><h2>Сила тапа</h2><p>Следующий уровень даёт +1 ✦ за тап.</p>
+          <button className="btn" disabled={busy || me.clicker.powerPrice === null || me.user.balance < me.clicker.powerPrice} onClick={()=>void run(async()=>{await api.improveClicker('power');})}>{me.clicker.powerPrice === null?'Максимум':`Улучшить · ${format(me.clicker.powerPrice)} ✦`}</button>
+        </article>
+        <article><h2>Медведи-агенты · {me.clicker.bears}</h2><p>Каждый приносит 30 ✦ за 15 минут. Запас копится до 8 часов.</p>
+          <button className="btn" disabled={busy || me.clicker.bearPrice === null || me.user.balance < me.clicker.bearPrice} onClick={()=>void run(async()=>{await api.improveClicker('bear');})}>{me.clicker.bearPrice === null?'Все наняты':`Нанять · ${format(me.clicker.bearPrice)} ✦`}</button>
+          {me.clicker.bears > 0 && <button className="collection-link" disabled={busy} onClick={()=>void run(async()=>{const {reward}=await api.improveClicker('collect');setNotice(`Агенты принесли ${format(reward)} ✦`);})}>Забрать накопленное</button>}
+        </article>
+      </div>
+    </section>}
     {tab === 'games' && <section className="paddy-games">
       {game === null ? <>
         <div className="collection-heading"><h1>Игры</h1></div>
@@ -261,6 +346,26 @@ export default function App() {
         })}</div><h2>{item.name}</h2><p>{format(item.price_coins)} игровых ✦</p>
         <button className="btn" disabled={busy || me.user.balance<item.price_coins} onClick={()=>openCase(item)}>Открыть</button>
       </article>)}</div>}
+      {game==='rocket' && <div className="collection-panel rocket-panel">
+        <h2>Ракета</h2>
+        <div className={`rocket-scene ${rocket?.status ?? 'ready'}`}>
+          <strong>×{flightFactor.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
+          <span style={{transform:`translate(${Math.min(60,(flightFactor-1)*34)}px,${-Math.min(66,(flightFactor-1)*34)}px)`}}><ModeIllustration mode="rocket"/></span>
+        </div>
+        {rocket?.status === 'flying' ? <>
+          <p>Стоимость карточки: {format(rocket.stake)} ✦</p>
+          <button className="btn" disabled={busy} onClick={()=>void run(async()=>setRocket(await api.cashRocket(rocket.launched)))}>Забрать звёзды</button>
+        </> : <>
+          {rocket?.status === 'crashed' && <p>Полёт завершился. Карточка потрачена.</p>}
+          {rocket?.status === 'cashed' && <p>Получено {format(rocket.payout ?? 0)} ✦</p>}
+          <p>Выбери карточку из альбома. Забери звёзды до конца полёта.</p>
+          <select className="input" aria-label="Карточка для полёта" value={rocketCard} onChange={e=>setRocketCard(e.target.value)} disabled={busy}>
+            <option value="">Выбрать карточку</option>
+            {me.collection.map(card=><option key={card.id} value={card.id}>{gifts.find(g=>g.id===card.giftId)?.name ?? 'Карточка'} · {format(gifts.find(g=>g.id===card.giftId)?.price_stars ?? 0)} ✦</option>)}
+          </select>
+          <button className="btn" disabled={busy || !me.collection.some(card=>String(card.id)===rocketCard)} onClick={()=>void run(async()=>{setRocket(await api.launchRocket(Number(rocketCard)));setRocketCard('');})}>Запустить ракету</button>
+        </>}
+      </div>}
       {game==='wheel' && <div className="collection-panel"><h2>Ежедневное колесо</h2><p>Одна попытка раз в 24 часа.</p><div className="collection-wheel-wrap"><span className="collection-wheel-pointer">▼</span><div className="wheel" style={{transform:`rotate(${rotation}deg)`,transition:'transform 3.5s cubic-bezier(.12,.8,.2,1)'}}>{[50,100,200,500,1000,5000].map((reward,i)=><span key={reward} className="wheel-sector" style={{transform:`rotate(${i*60}deg)`}}>{reward}</span>)}</div></div><button className="btn" disabled={busy || wheelRemaining > 0} onClick={spin}>
         {busy ? 'Крутится…' : wheelRemaining ? `Следующий бонус через ${wheelCountdown}` : 'Крутить бесплатно'}
       </button></div>}
@@ -270,8 +375,8 @@ export default function App() {
       <button aria-pressed={collectionView==='album'} onClick={()=>setCollectionView('album')}>Альбом</button>
       <button aria-pressed={collectionView==='catalog'} onClick={()=>setCollectionView('catalog')}>Каталог</button>
     </div>}
-    {tab==='games' && game==='collection' && collectionView==='album' && <section><div className="collection-heading"><h1>Моя коллекция</h1><span>{me.collection.length} карточек</span></div>{me.collection.length===0?<div className="collection-panel"><span className="collection-large">◇</span><h2>Первая карточка впереди</h2><p>Натапай звёзды и попробуй апгрейд.</p><button className="btn" onClick={()=>{setTab('games');openGame('upgrade');}}>К апгрейду</button></div>:<div className="collection-grid">{me.collection.map(card=>{const gift=gifts.find(g=>g.id===card.giftId);return <article key={card.id}><div className="collection-card-art">{gift && <LottiePlayer url={gift.animation_url}/>}</div><h3>{gift?.name??'Карточка'}</h3><p>{format(gift?.price_stars??0)} игровых ✦</p><small>{gift && priceText(gift)}</small><button className="collection-link" disabled={busy || !gift} onClick={()=>{setSourceCard(card);setTab('games');openGame('upgrade');setResult('');}}>Улучшить карточку →</button><button className="btn" disabled={busy || !gift} onClick={()=>sell(card)}>Продать за игровые ✦</button></article>;})}</div>}
-    </section>}
+    {tab==='games' && game==='collection' && collectionView==='album' && <section><details className="album-inventory"><summary>Мои карточки · {me.collection.length}</summary><div className="collection-heading"><h1>Моя коллекция</h1><span>{me.collection.length} карточек</span></div>{me.collection.length===0?<div className="collection-panel"><span className="collection-large">◇</span><h2>Первая карточка впереди</h2><p>Натапай звёзды и попробуй апгрейд.</p><button className="btn" onClick={()=>{setTab('games');openGame('upgrade');}}>К апгрейду</button></div>:<div className="collection-grid">{me.collection.map(card=>{const gift=gifts.find(g=>g.id===card.giftId);return <article key={card.id}><div className="collection-card-art">{gift && <LottiePlayer url={gift.animation_url}/>}</div><h3>{gift?.name??'Карточка'}</h3><p>{format(gift?.price_stars??0)} игровых ✦</p><small>{gift && priceText(gift)}</small><button className="collection-link" disabled={busy || !gift} onClick={()=>{setSourceCard(card);setTab('games');openGame('upgrade');setResult('');}}>Улучшить карточку →</button><button className="btn" disabled={busy || !gift} onClick={()=>sell(card)}>Продать за игровые ✦</button></article>;})}</div>}
+    </details></section>}
     {tab==='games' && game==='collection' && collectionView==='catalog' && <section>
       <div className="collection-heading"><h2>Каталог подарков</h2><span>{fresh}/{gifts.length} актуальных цен</span></div><p className="collection-muted">Изображения подарков используются как виртуальные карточки. Рыночная цена служит ориентиром игровой стоимости. Никаких реальных активов.</p><input className="input" aria-label="Найти карточку" placeholder="Найти карточку…" value={search} onChange={e=>{setSearch(e.target.value);setLimit(20);}}/><div className="collection-grid">{sorted.slice(0,limit).map(g=><article key={g.id}><div className="collection-card-art"><LottiePlayer url={g.animation_url}/></div><h3>{g.name}</h3><p>{format(g.price_stars)} ✦</p><small>{priceText(g)}</small><button className="collection-link" onClick={()=>{setSourceCard(null);setGiftId(g.id);openGame('upgrade');setTab('games');}}>Выбрать для апгрейда →</button></article>)}</div>{limit<sorted.length && <button className="btn" onClick={()=>setLimit(v=>v+20)}>Показать ещё</button>}</section>}
     {tab==='profile' && <section className="profile-sets">
@@ -308,9 +413,14 @@ export default function App() {
     {tab==='games' && game==='collection' && collectionView==='album' && <section className="profile-sets">
       <h2>Коллекции</h2>
       <p className="collection-muted">Собери все карточки набора, чтобы получить бонус. Открытые карточки засчитываются навсегда.</p>
-      {[...me.progress.sets].reverse().map((set, index) => <section className="profile-set" key={set.id}>
+      <div className="album-pagination">
+        <button className="btn" disabled={albumPage===0} onClick={()=>setAlbumPage(page=>page-1)}>←</button>
+        <span>Страница {albumPage+1} / {albumSets.length}</span>
+        <button className="btn" disabled={albumPage>=albumSets.length-1} onClick={()=>setAlbumPage(page=>page+1)}>→</button>
+      </div>
+      {albumSets.slice(albumPage,albumPage+1).map(set => <section className="profile-set album-sheet" key={set.id}>
         <header>
-          <h3>Набор {index + 1}</h3>
+          <h3>Набор {albumPage + 1}</h3>
           <span>{set.giftIds.filter(id => unlocked.has(id)).length}/{set.giftIds.length}</span>
         </header>
         <p>{set.complete ? '✓ Бонус получен' : 'Бонус за набор'} · {format(set.bonus)} ✦</p>
@@ -318,9 +428,11 @@ export default function App() {
           {set.giftIds.map(id => {
             const gift = gifts.find(item => item.id === id);
             const open = unlocked.has(id);
+            const copies = me.collection.filter(card=>card.giftId===id).length;
             return <article key={id} className={open ? 'profile-card' : 'profile-card locked'}>
               <div className="profile-card-art">
                 {gift && <LottiePlayer url={gift.animation_url}/>}
+                {copies > 0 && <span className="album-copy">×{copies}</span>}
                 {!open && <span className="profile-card-lock" aria-label="Закрыта">🔒</span>}
               </div>
               <strong>{gift?.name ?? 'Карточка'}</strong>

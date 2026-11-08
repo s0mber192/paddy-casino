@@ -210,20 +210,118 @@ export function listCases() {
   });
 }
 
-const clickStmt = db.prepare(`
-  UPDATE users
-  SET balance = balance + @reward,
-      total_clicks = total_clicks + 1,
-      last_click_ms = @now
-  WHERE telegram_id = @id AND (@now - last_click_ms) >= @minInterval
+db.exec(`
+  CREATE TABLE IF NOT EXISTS clicker_progress (
+    telegram_id INTEGER PRIMARY KEY REFERENCES users(telegram_id),
+    power INTEGER NOT NULL DEFAULT 0,
+    bears INTEGER NOT NULL DEFAULT 0,
+    bear_since INTEGER NOT NULL DEFAULT 0,
+    tap_credit REAL NOT NULL DEFAULT 12,
+    tap_at INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS rocket_flights (
+    telegram_id INTEGER PRIMARY KEY REFERENCES users(telegram_id),
+    launched INTEGER NOT NULL,
+    crash_ms INTEGER NOT NULL,
+    stake INTEGER NOT NULL,
+    payout INTEGER,
+    cashout_multiplier REAL
+  );
 `);
 
-export function registerClick(telegramId: number, reward: number, minIntervalMs: number) {
-  const res = clickStmt.run({ id: telegramId, reward, now: Date.now(), minInterval: minIntervalMs });
-  if (res.changes === 0) throw new GameError('TOO_FAST', 429);
-  const u = getUserStmt.get(telegramId)!;
-  return { balance: u.balance, totalClicks: u.total_clicks, earned: reward };
+const clickerRow = db.prepare('SELECT * FROM clicker_progress WHERE telegram_id=?');
+function ensureClicker(id: number) {
+  db.prepare('INSERT OR IGNORE INTO clicker_progress(telegram_id) VALUES(?)').run(id);
+  return clickerRow.get(id) as {power:number; bears:number; bear_since:number; tap_credit:number; tap_at:number};
 }
+const bearInterval = 15 * 60_000;
+export function getClicker(id: number, base: number) {
+  const row = ensureClicker(id);
+  const intervals = Math.max(0, Math.min(32, Math.floor((Date.now() - row.bear_since) / bearInterval)));
+  return {
+    perTap:base + row.power, bears:row.bears, offlineReward:intervals * row.bears * 30,
+    powerPrice:row.power < 20 ? 100 * (row.power + 1) ** 2 : null,
+    bearPrice:row.bears < 5 ? 500 * (row.bears + 1) : null,
+  };
+}
+
+export const registerClick = db.transaction((id: number, base: number, count: number) => {
+  const row = ensureClicker(id);
+  const now = Date.now();
+  const available = Math.min(12, row.tap_credit + Math.max(0, now - row.tap_at) * 0.012);
+  const accepted = Math.min(count, Math.floor(available));
+  if (!accepted) throw new GameError('TOO_FAST', 429);
+  const user = getUserStmt.get(id)!;
+  const earned = (base + row.power) * accepted;
+  if (user.balance > Number.MAX_SAFE_INTEGER - earned) throw new GameError('BALANCE_LIMIT');
+  db.prepare('UPDATE clicker_progress SET tap_credit=?,tap_at=? WHERE telegram_id=?').run(available-accepted,now,id);
+  db.prepare('UPDATE users SET balance=balance+?, total_clicks=total_clicks+?, last_click_ms=? WHERE telegram_id=?')
+    .run(earned,accepted,now,id);
+  return {balance:user.balance+earned,totalClicks:user.total_clicks+accepted,earned,accepted};
+}).immediate;
+
+export const improveClicker = db.transaction((id: number, action: 'power'|'bear'|'collect', base: number) => {
+  const info = getClicker(id,base);
+  const user = getUserStmt.get(id)!;
+  const price = action === 'power' ? info.powerPrice : action === 'bear' ? info.bearPrice : 0;
+  if (price === null) throw new GameError('UPGRADE_LIMIT');
+  if (user.balance < price) throw new GameError('INSUFFICIENT_FUNDS',402);
+  const reward = action === 'power' ? 0 : info.offlineReward;
+  if (action === 'collect' && !reward) throw new GameError('NO_OFFLINE_REWARD');
+  if (!Number.isSafeInteger(user.balance - price + reward)) throw new GameError('BALANCE_LIMIT');
+  if (action === 'power') db.prepare('UPDATE clicker_progress SET power=power+1 WHERE telegram_id=?').run(id);
+  else if (action === 'bear') db.prepare('UPDATE clicker_progress SET bears=bears+1,bear_since=? WHERE telegram_id=?').run(Date.now(),id);
+  else {
+    const row = ensureClicker(id);
+    const elapsed = Date.now() - row.bear_since;
+    const next = elapsed >= 32 * bearInterval ? Date.now() : row.bear_since + Math.floor(elapsed / bearInterval) * bearInterval;
+    db.prepare('UPDATE clicker_progress SET bear_since=? WHERE telegram_id=?').run(next,id);
+  }
+  db.prepare('UPDATE users SET balance=balance-?+? WHERE telegram_id=?').run(price,reward,id);
+  return {reward};
+}).immediate;
+
+const flightRow = db.prepare('SELECT * FROM rocket_flights WHERE telegram_id=?');
+function flight(id: number) {
+  return flightRow.get(id) as {launched:number; crash_ms:number; stake:number; payout:number|null; cashout_multiplier:number|null} | undefined;
+}
+const multiplierAt = (elapsed: number) => Math.floor(Math.exp(Math.max(0,elapsed) / 4500) * 100) / 100;
+export function getRocket(id: number) {
+  const row = flight(id);
+  if (!row) return null;
+  const now = Date.now();
+  const ended = now >= row.launched + row.crash_ms;
+  return {
+    launched:row.launched, now, stake:row.stake, payout:row.payout,
+    status:row.payout !== null ? 'cashed' : ended ? 'crashed' : 'flying',
+    multiplier:row.cashout_multiplier ?? multiplierAt(Math.min(row.crash_ms,now-row.launched)),
+  };
+}
+export const launchRocket = db.transaction((id: number, cardId: number) => {
+  assertAmount(cardId);
+  if (getRocket(id)?.status === 'flying') throw new GameError('ROCKET_ACTIVE');
+  const card = db.prepare('SELECT gift_id FROM collection_cards WHERE id=? AND telegram_id=?').get(cardId,id) as {gift_id:string}|undefined;
+  if (!card) throw new GameError('CARD_NOT_FOUND',404);
+  const stake = getGiftPrice(card.gift_id);
+  const factor = Math.min(20, Math.max(1, 0.94 / ((crypto.randomInt(1_000_000) + 1) / 1_000_000)));
+  const crashMs = Math.floor(4500 * Math.log(factor));
+  db.prepare('DELETE FROM collection_cards WHERE id=? AND telegram_id=?').run(cardId,id);
+  db.prepare(`INSERT INTO rocket_flights VALUES (?,?,?,?,NULL,NULL)
+    ON CONFLICT(telegram_id) DO UPDATE SET launched=excluded.launched,crash_ms=excluded.crash_ms,
+      stake=excluded.stake,payout=NULL,cashout_multiplier=NULL`).run(id,Date.now(),crashMs,stake);
+  return getRocket(id);
+}).immediate;
+
+export const cashRocket = db.transaction((id: number, launched: number) => {
+  const state = getRocket(id);
+  if (!state || state.launched !== launched || state.status !== 'flying') return state;
+  const payout = Math.floor(state.stake * state.multiplier);
+  const user = getUserStmt.get(id)!;
+  if (!Number.isSafeInteger(user.balance + payout)) throw new GameError('BALANCE_LIMIT');
+  db.prepare('UPDATE users SET balance=balance+? WHERE telegram_id=?').run(payout,id);
+  db.prepare('UPDATE rocket_flights SET payout=?,cashout_multiplier=? WHERE telegram_id=?').run(payout,state.multiplier,id);
+  return getRocket(id);
+}).immediate;
 
 export const openCase = db.transaction((telegramId: number, caseId: number) => {
   assertAmount(caseId);

@@ -352,3 +352,35 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .album-switch {display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:12px 0 18px;border:1px solid var(--line);border-radius:14px;background:#101213}
 .album-switch button {border:0;border-radius:10px;padding:12px;background:transparent;color:#c6c1b7;font:inherit;font-weight:700;cursor:pointer}
 .album-switch button[aria-pressed=true] {background:#443727;color:#ffe0a0}
+
+.collection-app .tap {touch-action:manipulation;user-select:none}
+.clicker-upgrades {display:grid;gap:10px;width:100%;text-align:left}
+.clicker-upgrades article {padding:14px;border:1px solid var(--line);border-radius:16px;background:#202122}
+.clicker-upgrades h2 {margin:0;font-size:16px}
+.clicker-upgrades p {font-size:12px}
+.mode-tile .mode-art {top:50%;transform:translateY(-50%);right:10px;width:84px;height:84px}
+.mode-upgrade .mode-art,.mode-collection .mode-art {width:110px;height:110px;right:14px}
+.mode-tile:not(.mode-upgrade) .mode-gift {inset:37%;transform:rotate(var(--angle)) translateY(-27px) rotate(calc(-1 * var(--angle)))}
+.mode-upgrade .mode-gift {transform:rotate(var(--angle)) translateY(-34px) rotate(calc(-1 * var(--angle)))}
+.mode-tile:not(.mode-upgrade):not(.mode-collection):not(.mode-wheel):not(.mode-rocket) .mode-art {top:7px;transform:none}
+.mode-wheel,.mode-rocket {min-height:130px}
+.mode-rocket {background:linear-gradient(135deg,#11324e,#38679c)}
+.collection-case-grid .case-cover {position:relative;display:block;padding:0;border-radius:13px}
+.case-cover > div {position:absolute;width:42%;height:42%}
+.case-cover > div:nth-child(1) {width:64%;height:64%;top:18%;left:18%;z-index:2;transform:rotate(-8deg)}
+.case-cover > div:nth-child(2) {top:0;left:2%;transform:rotate(-12deg)}
+.case-cover > div:nth-child(3) {top:3%;right:0;transform:rotate(11deg)}
+.case-cover > div:nth-child(4) {bottom:0;right:1%;transform:rotate(13deg)}
+.case-cover::before {background:repeating-conic-gradient(at 50% 50%,#fff5 0 4deg,transparent 4deg 21deg);mask-image:radial-gradient(#000,transparent 73%)}
+.album-pagination {display:flex;align-items:center;justify-content:space-between;gap:8px}
+.album-pagination .btn {width:auto;margin:0;padding:8px 14px}
+.collection-app .album-sheet {position:relative;padding:16px 12px 16px 26px;background:linear-gradient(90deg,#6f4c31,#9a7553 10px,#2c2521 11px,#342b25 100%);border-color:#9b764e}
+.album-sheet::before {content:'';position:absolute;left:6px;top:12px;bottom:12px;border-left:2px dotted #e6bf87}
+.album-sheet .profile-card {background:#171512;border:1px solid #8e7051}
+.album-copy {position:absolute;right:4px;top:4px;background:#f7d28a;color:#382512;padding:2px 5px;border-radius:7px;font-size:10px}
+.album-inventory summary {cursor:pointer;color:#f4d49b;padding:10px}
+.rocket-scene {min-height:180px;position:relative;overflow:hidden;border-radius:16px;background:radial-gradient(ellipse at 70% 70%,#275071,#111829 70%);display:grid;place-items:center}
+.rocket-scene strong {position:absolute;top:18px;left:16px;color:#ffe3aa;font-size:32px;z-index:1}
+.rocket-scene span {position:absolute;top:50%;left:42%;width:85px;height:85px;transition:transform 45ms linear}
+.rocket-scene.crashed {background:radial-gradient(ellipse at 70% 70%,#633839,#211620 70%)}
+.rocket-panel select {color:#fff}
