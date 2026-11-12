@@ -144,7 +144,7 @@ try {
   const launched = (await request('/api/rocket/launch',{cardId:rocketCard})).json();
   assert.equal(launched.bet.status,'queued');
   assert.equal(launched.bet.launched,launched.nextLaunch);
-  assert.equal(launched.nextLaunch-launched.launched,15000);
+  assert.ok(launched.nextLaunch-launched.launched >= 10000);
   assert.equal(db.prepare('SELECT id FROM collection_cards WHERE id=?').get(rocketCard),undefined);
   assert.equal((await request('/api/rocket/cash',{launched:launched.bet.launched})).json().bet.status,'queued');
   const flightStart=Date.now()-100;

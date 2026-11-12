@@ -473,3 +473,17 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .rocket-panel .rocket-scene.crashed {animation:none;background:radial-gradient(ellipse at 65% 60%,#7e263a,#241625 75%)}
 .rocket-ship {width:clamp(54px,16vw,76px);height:clamp(54px,16vw,76px)}
 .rocket-lobby {animation-delay:0s}
+
+.rocket-panel .rocket-scene.crashed {
+  background:repeating-linear-gradient(0deg,transparent 0 22px,#ff819029 23px 24px),
+    repeating-linear-gradient(90deg,transparent 0 22px,#ff819029 23px 24px),
+    radial-gradient(ellipse at 65% 65%,#922b42,#261323 78%);
+}
+.rocket-ship {width:clamp(60px,17vw,82px);height:clamp(60px,17vw,82px)}
+.rocket-payout {position:fixed;z-index:12;bottom:90px;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 24px));display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:12px;padding:12px;border:1px solid #71ffe390;border-radius:18px;background:radial-gradient(ellipse at 0 0,#18605e,#111b34 75%);box-shadow:0 8px 34px #000b,0 0 24px #5cffd134;animation:reward-in .3s ease-out}
+.rocket-payout-art {width:58px;height:58px}
+.rocket-payout small,.rocket-payout span,.rocket-payout strong {display:block}
+.rocket-payout strong {color:#8dffdd;font-size:clamp(15px,4vw,22px)}
+.rocket-payout span,.rocket-payout small {color:#bde2ef;font-size:12px}
+.rocket-payout button {border:0;background:transparent;color:#fff;font-size:24px;cursor:pointer}
+@keyframes reward-in {from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}

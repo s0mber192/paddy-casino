@@ -105,7 +105,7 @@ if (process.env.APP_TEST !== '1') setInterval(() => {
 app.get('/api/rocket',async req => getRocket(req.tgUser.id));
 app.post<{Body: {cardId?:number; coins?:number; autoX?:number}}>('/api/rocket/launch', {
   schema:{body:{type:'object',additionalProperties:false,properties:{
-    cardId:integer,coins:integer,autoX:{type:'number',minimum:1.01,maximum:20},
+    cardId:integer,coins:integer,autoX:{type:'number',minimum:1.01,maximum:29.99},
   }}},
 }, async req => launchRocket(req.tgUser.id,req.body.cardId,req.body.autoX === undefined ? null : Math.round(req.body.autoX * 100) / 100,req.body.coins));
 app.post<{Body: {launched:number}}>('/api/rocket/cash',async req => cashRocket(req.tgUser.id,req.body.launched));

@@ -29,6 +29,7 @@ export default function App() {
   const [albumPage, setAlbumPage] = useState(0);
   const [rocketSource,setRocketSource]=useState<'coins'|'card'>('coins');
   const [rocketCoins,setRocketCoins]=useState(100);
+  const [seenPayout,setSeenPayout] = useState(() => localStorage.getItem('paddy-rocket-payout') ?? '');
   const [autoX, setAutoX] = useState('');
   const [rocketCard, setRocketCard] = useState('');
   const [rocket, setRocket] = useState<Rocket|null>(null);
@@ -119,7 +120,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (game !== 'rocket' || tab !== 'games') return;
+    if (tab !== 'tap' && (game !== 'rocket' || tab !== 'games')) return;
     let current = true;
     let pending = false;
     const poll = async () => {
@@ -131,23 +132,26 @@ export default function App() {
       } catch {} finally {pending = false;}
     };
     void poll();
-    const timer = setInterval(poll,400);
+    const timer = setInterval(poll,tab==='tap' ? 3000 : 400);
     return () => {current = false;clearInterval(timer);};
   },[game,tab]);
 
   useEffect(() => {
+    if (tab !== 'games' || game !== 'rocket') return;
     if (!rocket || rocket.phase !== 'flying') {setFlightFactor(rocket?.multiplier ?? 1);return;}
     const received = performance.now();
     const timer = setInterval(() => {
       const elapsed = rocket.now - rocket.launched + performance.now() - received;
-      setFlightFactor(Math.min(20.08,Math.exp(elapsed / rocket.growthMs)));
+      setFlightFactor(Math.min(30,Math.exp(elapsed / rocket.growthMs)));
     },40);
     return () => clearInterval(timer);
-  },[rocket]);
+  },[rocket,tab,game]);
   const paidFlight = rocket?.bet?.status === 'cashed' ? rocket.bet.launched : null;
   useEffect(() => {
     if (paidFlight !== null) void refresh().catch(()=>{});
   },[paidFlight,refresh]);
+  const payout = rocket?.bet?.status === 'cashed' ? rocket.bet : null;
+  const payoutKey = payout && me ? `${me.user.id}:${payout.launched}` : '';
   const rocketProgress = rocket ? Math.min(1,Math.log(Math.max(1,flightFactor))*rocket.growthMs/rocket.flightMs) : 0;
   const rocketCurve = Array.from({length:25},(_,i)=>{const t=i*rocketProgress/24;return `${9+81*t},${83-61*t**1.55}`;}).join(' ');
   const selected = gifts.find(g => g.id === giftId);
@@ -352,9 +356,9 @@ export default function App() {
             {me.collection.map(card=><option key={card.id} value={card.id}>{gifts.find(g=>g.id===card.giftId)?.name ?? 'Карточка'}</option>)}
           </select>}
           <label>Автостоп × (по желанию)
-            <input className="input" type="number" min="1.01" max="20" step=".01" placeholder="2.00" value={autoX} onChange={e=>setAutoX(e.target.value)}/>
+            <input className="input" type="number" min="1.01" max="29.99" step=".01" placeholder="2.00" value={autoX} onChange={e=>setAutoX(e.target.value)}/>
           </label>
-          <button className="btn" disabled={busy || !rocket || (rocketSource==='card' ? !me.collection.some(card=>String(card.id)===rocketCard) : !Number.isSafeInteger(rocketCoins) || rocketCoins<1 || rocketCoins>Math.min(100000000,me.user.balance)) || (!!autoX && !/^\d+(?:\.\d{1,2})?$/.test(autoX)) || (!!autoX && (Number(autoX)<1.01 || Number(autoX)>20))} onClick={()=>void run(async()=>{
+          <button className="btn" disabled={busy || !rocket || (rocketSource==='card' ? !me.collection.some(card=>String(card.id)===rocketCard) : !Number.isSafeInteger(rocketCoins) || rocketCoins<1 || rocketCoins>Math.min(100000000,me.user.balance)) || (!!autoX && !/^\d+(?:\.\d{1,2})?$/.test(autoX)) || (!!autoX && (Number(autoX)<1.01 || Number(autoX)>29.99))} onClick={()=>void run(async()=>{
             setRocket(await api.launchRocket(rocketSource==='card' ? Number(rocketCard) : undefined,autoX ? Number(autoX) : undefined,rocketSource==='coins' ? rocketCoins : undefined));
             setRocketCard('');
           })}>Поставить на следующий раунд</button>
@@ -435,6 +439,12 @@ export default function App() {
         </div>
       </section>)}
     </section>}
+    {payout && payoutKey !== seenPayout && (tab==='tap' || (tab==='games' && game==='rocket')) && <aside className="rocket-payout" role="status">
+      <div className="rocket-payout-art"><LottiePlayer url={gifts.find(g=>g.id==='143')?.animation_url ?? ''}/></div>
+      <div><small>Награда за полёт</small><strong>+{format(payout.payout ?? 0)} Paddy Coins</strong>
+      <span>Забрано на ×{payout.cashoutMultiplier?.toLocaleString('ru-RU',{maximumFractionDigits:2})}</span></div>
+      <button aria-label="Закрыть награду" onClick={()=>{localStorage.setItem('paddy-rocket-payout',payoutKey);setSeenPayout(payoutKey);}}>×</button>
+    </aside>}
     <nav className="bottom-nav">{([['tap','✦','Paddy Coin'],['games','◈','Игры'],['profile','●','Профиль']] as const).map(([key,icon,title])=><button key={key} className={tab===key?'active':''} disabled={busy} onClick={()=>{setTab(key);if(key==='games')openGame(null);window.scrollTo(0,0);}}><span>{icon}</span><small>{title}</small></button>)}</nav>
     {previewCase && <div className="modal"><div className="modal-card"><h2>{previewCase.name}</h2><div className="collection-roulette" ref={stripRef}><div className="collection-roulette-pointer"/><div className="collection-strip" style={{transform:`translateX(${offset}px)`,transition:rolling?'transform 3.5s cubic-bezier(.1,.9,.2,1)':'none'}}>{strip.map((reward,index)=><div data-prize={index} key={index}>{gifts.find(g=>g.id===reward) && <LottiePlayer url={gifts.find(g=>g.id===reward)!.animation_url} style={{width:44,height:44}}/>}<strong>{gifts.find(g=>g.id===reward)?.name ?? 'Карточка'}</strong></div>)}</div></div>{caseDone?<><h3>{gifts.find(g=>g.id===caseReward)?.name ?? 'Карточка'} добавлена в коллекцию</h3><button className="btn" disabled={busy} onClick={()=>setPreviewCase(null)}>Готово</button></>:<p>Открываем…</p>}</div></div>}
   </main>;
