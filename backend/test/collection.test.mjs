@@ -144,7 +144,7 @@ try {
   const launched = (await request('/api/rocket/launch',{cardId:rocketCard})).json();
   assert.equal(launched.bet.status,'queued');
   assert.equal(launched.bet.launched,launched.nextLaunch);
-  assert.equal(launched.nextLaunch-launched.launched,10000);
+  assert.equal(launched.nextLaunch-launched.launched,25000);
   assert.equal(db.prepare('SELECT id FROM collection_cards WHERE id=?').get(rocketCard),undefined);
   assert.equal((await request('/api/rocket/cash',{launched:launched.bet.launched})).json().bet.status,'queued');
   const flightStart=Date.now()-100;
@@ -157,7 +157,7 @@ try {
   assert.equal(balance(),rocketBalance+cashed.bet.payout);
   const autoCard = Number(insertCard.run('59',now).lastInsertRowid);
   assert.equal((await request('/api/rocket/launch',{cardId:autoCard,autoX:1.2})).statusCode,200);
-  db.prepare('UPDATE rocket_flights SET launched=?,crash_ms=1000 WHERE telegram_id=1').run(Date.now()-2000);
+  db.prepare('UPDATE rocket_flights SET launched=?,crash_ms=1500 WHERE telegram_id=1').run(Date.now()-2000);
   const autoBefore=balance();
   const auto=(await request('/api/rocket')).json();
   assert.equal(auto.bet.status,'cashed');

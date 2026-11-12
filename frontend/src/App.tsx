@@ -58,6 +58,8 @@ export default function App() {
   const [sourceCard, setSourceCard] = useState<CardDto | null>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [albumPage, setAlbumPage] = useState(0);
+  const [rocketSource,setRocketSource]=useState<'coins'|'card'>('coins');
+  const [rocketCoins,setRocketCoins]=useState(100);
   const [autoX, setAutoX] = useState('');
   const [rocketCard, setRocketCard] = useState('');
   const [rocket, setRocket] = useState<Rocket|null>(null);
@@ -169,7 +171,7 @@ export default function App() {
     const received = performance.now();
     const timer = setInterval(() => {
       const elapsed = rocket.now - rocket.launched + performance.now() - received;
-      setFlightFactor(Math.min(20.08,Math.exp(elapsed / 2500)));
+      setFlightFactor(Math.min(20.08,Math.exp(elapsed / rocket.growthMs)));
     },40);
     return () => clearInterval(timer);
   },[rocket]);
@@ -177,6 +179,8 @@ export default function App() {
   useEffect(() => {
     if (paidFlight !== null) void refresh().catch(()=>{});
   },[paidFlight,refresh]);
+  const rocketProgress = Math.min(1,Math.log(Math.max(1,flightFactor))/3);
+  const rocketCurve = Array.from({length:25},(_,i)=>{const t=i*rocketProgress/24;return `${8+84*t},${88-70*t**1.55}`;}).join(' ');
   const selected = gifts.find(g => g.id === giftId);
   const sourceGift = sourceCard && gifts.find(g => g.id === sourceCard.giftId);
   const stake = sourceGift ? sourceGift.price_stars : bet;
@@ -287,9 +291,9 @@ export default function App() {
         <div className="collection-heading"><h1>Игры</h1></div>
         <div className="mode-grid">
           {gameModes.map(mode => <button key={mode.id} className={`mode-tile mode-${mode.id}`} disabled={busy} onClick={() => openGame(mode.id)}>
-            <span className="mode-art" aria-hidden="true"><ModeIllustration mode={mode.id}/>{mode.art.map((id,index)=>{
+            <span className="mode-art mode-layout" aria-hidden="true"><ModeIllustration mode={mode.id}/>{mode.art.map((id,index)=>{
               const gift = gifts.find(item=>item.id===id);
-              return gift && <span className="mode-gift" key={id} style={{'--angle':`${index * 360 / mode.art.length}deg`, '--slot':index} as React.CSSProperties}><LottiePlayer url={gift.animation_url}/></span>;
+              return gift && <span className="mode-gift gift-position" key={id} style={{'--angle':`${index * 360 / mode.art.length}deg`, '--slot':index} as React.CSSProperties}><LottiePlayer url={gift.animation_url}/></span>;
             })}</span>
             <span className="mode-copy"><strong>{mode.title}</strong><small>{mode.description}</small></span>
           </button>)}
@@ -349,32 +353,43 @@ export default function App() {
       </article>)}</div>}
       {game==='rocket' && <div className="collection-panel rocket-panel">
         <h2>Ракета</h2>
+        <div className="rocket-history" aria-label="Последние краши">{rocket?.history.map((value,i)=><span key={i}>×{value.toFixed(2)}</span>)}</div>
         <div className={`rocket-scene ${rocket?.phase ?? 'ready'}`}>
           <strong>×{flightFactor.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
-          <svg className="rocket-path" viewBox="0 0 300 180" preserveAspectRatio="none" aria-hidden="true"><path d="M0 178Q185 173 300 18" fill="none" stroke="#7dd8ff" strokeWidth="2" strokeDasharray="4 7"/></svg>
-          <div className="rocket-ship" style={{left:`${12+Math.min(62,Math.log(flightFactor)*20)}%`,bottom:`${8+Math.min(55,Math.log(flightFactor)*18)}%`}}>
-            <ModeIllustration mode="rocket"/>
+          <svg className="rocket-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points={rocketCurve} fill="none" stroke="currentColor" strokeWidth="2.5" vectorEffect="non-scaling-stroke"/></svg>
+          <div className="rocket-ship" style={{left:`${8+84*rocketProgress}%`,top:`${88-70*rocketProgress**1.55}%`}}>
+            <LottiePlayer url={gifts.find(g=>g.id==='143')?.animation_url ?? ''}/>
           </div>
+          {rocket?.phase==='crashed' && <div className="rocket-shards" key={rocket.launched} aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{'--shard-angle':`${i*40}deg`} as React.CSSProperties}/>)}</div>}
         </div>
         <p>{!rocket ? 'Загружаем раунд…' : rocket.phase === 'crashed'
           ? `Краш · следующий старт через ${Math.max(1,Math.ceil((rocket.nextLaunch-rocket.now)/1000))} с`
-          : 'Ракета в полёте · новый старт каждые 10 с'}</p>
+          : 'Ракета в полёте'}</p>
+        {rocket?.phase==='crashed' && <section className="rocket-entries">
+          <h3>Ставки следующего раунда</h3>
+          {rocket.entries.length ? <ul>{rocket.entries.map((entry,i)=><li key={i}><span>{entry.name}</span><strong>{format(entry.stake)} Paddy Coins</strong></li>)}</ul> : <p>Пока ставок нет</p>}
+        </section>}
         {rocket?.bet?.status === 'flying' ? <button className="btn" disabled={busy} onClick={()=>void run(async()=>{
           setRocket(await api.cashRocket(rocket.bet!.launched));
         })}>Забрать Paddy Coins</button> : rocket?.bet?.status === 'queued' ? (
-          <p role="status">Карточка принята на следующий старт{rocket.bet.autoX ? ` · автостоп ×${rocket.bet.autoX}` : ''}</p>
+          <p role="status">Ставка принята на следующий старт{rocket.bet.autoX ? ` · автостоп ×${rocket.bet.autoX}` : ''}</p>
         ) : <>
-          {rocket?.bet?.status === 'crashed' && <p>Карточка потрачена.</p>}
+          {rocket?.bet?.status === 'crashed' && <p>Ставка проиграна.</p>}
           {rocket?.bet?.status === 'cashed' && <p>Получено {format(rocket.bet.payout ?? 0)} ✦</p>}
+          <div className="album-switch" role="group" aria-label="Источник ставки">
+            <button aria-pressed={rocketSource==='coins'} onClick={()=>setRocketSource('coins')}>Paddy Coins</button>
+            <button aria-pressed={rocketSource==='card'} onClick={()=>setRocketSource('card')}>Подарок</button>
+          </div>
+          {rocketSource==='coins' ? <label>Сумма ставки<input className="input" type="number" min="1" max="100000000" value={rocketCoins} onChange={e=>setRocketCoins(Number(e.target.value))}/></label> :
           <select className="input" aria-label="Карточка для полёта" value={rocketCard} onChange={e=>setRocketCard(e.target.value)} disabled={busy}>
             <option value="">Выбрать карточку</option>
             {me.collection.map(card=><option key={card.id} value={card.id}>{gifts.find(g=>g.id===card.giftId)?.name ?? 'Карточка'}</option>)}
-          </select>
+          </select>}
           <label>Автостоп × (по желанию)
             <input className="input" type="number" min="1.01" max="20" step=".01" placeholder="2.00" value={autoX} onChange={e=>setAutoX(e.target.value)}/>
           </label>
-          <button className="btn" disabled={busy || !rocket || !me.collection.some(card=>String(card.id)===rocketCard) || (!!autoX && !/^\d+(?:\.\d{1,2})?$/.test(autoX)) || (!!autoX && (Number(autoX)<1.01 || Number(autoX)>20))} onClick={()=>void run(async()=>{
-            setRocket(await api.launchRocket(Number(rocketCard),autoX ? Number(autoX) : undefined));
+          <button className="btn" disabled={busy || !rocket || (rocketSource==='card' ? !me.collection.some(card=>String(card.id)===rocketCard) : !Number.isSafeInteger(rocketCoins) || rocketCoins<1 || rocketCoins>Math.min(100000000,me.user.balance)) || (!!autoX && !/^\d+(?:\.\d{1,2})?$/.test(autoX)) || (!!autoX && (Number(autoX)<1.01 || Number(autoX)>20))} onClick={()=>void run(async()=>{
+            setRocket(await api.launchRocket(rocketSource==='card' ? Number(rocketCard) : undefined,autoX ? Number(autoX) : undefined,rocketSource==='coins' ? rocketCoins : undefined));
             setRocketCard('');
           })}>Поставить на следующий раунд</button>
         </>}

@@ -433,3 +433,23 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .mode-wheel {background:linear-gradient(125deg,#9d3e0e,#d98228)}
 .mode-rocket {background:linear-gradient(125deg,#073c8d,#236cc6)}
 .mode-collection {background:linear-gradient(125deg,#a74b10,#db8125)}
+
+.mode-tile .mode-layout.mode-art {position:relative;inset:auto;transform:none;display:block;overflow:hidden;width:104px;height:94px;align-self:center}
+.mode-layout.mode-art .mode-gift.gift-position {position:absolute;inset:auto;top:62px;left:calc(12px + var(--slot) * 28px);width:24px;height:24px;transform:none}
+.mode-upgrade .mode-layout.mode-art .mode-gift.gift-position {inset:35%;width:auto;height:auto;transform:rotate(var(--angle)) translateY(-28px) rotate(calc(-1 * var(--angle)))}
+.mode-upgrade {background:linear-gradient(120deg,#006139,#12c875)}
+.mode-mystery {background:linear-gradient(120deg,#5917c5,#a43bf0)}
+.mode-cases,.mode-rocket {background:linear-gradient(120deg,#0648b7,#087ced)}
+.mode-wheel,.mode-collection {background:linear-gradient(120deg,#a33a00,#f58008)}
+.rocket-history {display:flex;gap:5px;overflow-x:auto;width:100%;padding-bottom:6px}
+.rocket-history span {flex:none;background:#263344;color:#a9d6ff;padding:5px 8px;border-radius:8px;font-size:11px}
+.rocket-panel .rocket-scene {color:#61ffab;background:repeating-linear-gradient(0deg,transparent 0 23px,#89ffc012 24px),repeating-linear-gradient(90deg,transparent 0 23px,#89ffc012 24px),#101d23}
+.rocket-panel .rocket-scene.crashed {color:#ff717a;background:radial-gradient(ellipse,#501c29,#191922 74%)}
+.rocket-scene strong {color:inherit;text-shadow:0 0 16px currentColor}
+.rocket-path {opacity:1;filter:drop-shadow(0 0 6px currentColor)}
+.rocket-ship {width:42px;height:42px;transform:translate(-50%,-65%);transition:left 55ms linear,top 55ms linear}
+.rocket-shards {position:absolute;inset:0;pointer-events:none}
+.rocket-shards i {position:absolute;left:50%;top:50%;width:48%;height:2px;background:linear-gradient(90deg,#ffc2c2,transparent);transform-origin:left;animation:rocket-shatter .55s ease-out both}
+@keyframes rocket-shatter {from{opacity:1;transform:rotate(var(--shard-angle)) scaleX(.02)} 40%{opacity:1} to{opacity:0;transform:rotate(var(--shard-angle)) translateX(18px) scaleX(1.2)}}
+.rocket-entries ul {list-style:none;padding:0;margin:0}
+.rocket-entries li {display:flex;justify-content:space-between;gap:8px;padding:6px;border-bottom:1px solid var(--line)}
