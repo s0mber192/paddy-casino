@@ -400,3 +400,36 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .rocket-ship {position:absolute;width:66px;height:66px;transition:left 80ms linear,bottom 80ms linear}
 .rocket-ship .mode-illustration {inset:0}
 .rocket-scene.crashed .rocket-ship {filter:saturate(.65) drop-shadow(0 0 12px #f06a42)}
+
+/* Keep gift artwork and captions in separate layout boxes. */
+.mode-tile .mode-art.mode-art {
+  inset:auto;
+  right:auto;
+  top:auto;
+  transform:none;
+  width:104px;
+  height:94px;
+}
+.mode-tile .mode-illustration {position:absolute;inset:0}
+.mode-tile:not(.mode-upgrade) .mode-illustration {height:68px}
+.mode-tile:not(.mode-upgrade) .mode-gift {
+  position:absolute;
+  inset:auto;
+  bottom:1px;
+  left:calc(12px + var(--slot) * 28px);
+  width:24px;
+  height:24px;
+  transform:none;
+}
+.mode-tile.mode-upgrade .mode-gift {
+  position:absolute;
+  inset:35%;
+  transform:rotate(var(--angle)) translateY(-28px) rotate(calc(-1 * var(--angle)));
+}
+.mode-tile .mode-copy {margin:0}
+.mode-upgrade {background:linear-gradient(125deg,#087248,#26b96d)}
+.mode-mystery {background:linear-gradient(125deg,#5723b5,#9c46dd)}
+.mode-cases {background:linear-gradient(125deg,#0956ae,#287edd)}
+.mode-wheel {background:linear-gradient(125deg,#9d3e0e,#d98228)}
+.mode-rocket {background:linear-gradient(125deg,#073c8d,#236cc6)}
+.mode-collection {background:linear-gradient(125deg,#a74b10,#db8125)}

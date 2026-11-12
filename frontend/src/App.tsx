@@ -44,7 +44,7 @@ function ModeIllustration({mode}: {mode: Game}) {
   </svg>;
 }
 const format = (value: number) => value.toLocaleString('ru-RU');
-const errors: Record<string,string> = {TOO_FAST: 'Достигнут лимит скорости тапов.', NO_OFFLINE_REWARD: 'Медведи ещё копят звёзды.', ROCKET_ACTIVE: 'Полёт уже идёт.', INSUFFICIENT_FUNDS: 'Не хватает игровых звёзд. Натапай ещё!', WHEEL_COOLDOWN: 'Колесо доступно раз в 24 часа.', BAD_AMOUNT: 'Проверь сумму: нужно положительное целое число.', BAD_REQUEST: 'Проверь введённые данные.', CARD_NOT_FOUND: 'Карточка уже продана. Коллекция обновлена.', UNAUTHORIZED: 'Сессия истекла. Открой приложение заново.'};
+const errors: Record<string,string> = {TOO_FAST: 'Достигнут лимит скорости тапов.', NO_OFFLINE_REWARD: 'Медведи ещё копят Paddy Coins.', ROCKET_ACTIVE: 'Полёт уже идёт.', INSUFFICIENT_FUNDS: 'Не хватает Paddy Coins. Натапай ещё!', WHEEL_COOLDOWN: 'Колесо доступно раз в 24 часа.', BAD_AMOUNT: 'Проверь сумму: нужно положительное целое число.', BAD_REQUEST: 'Проверь введённые данные.', CARD_NOT_FOUND: 'Карточка уже продана. Коллекция обновлена.', UNAUTHORIZED: 'Сессия истекла. Открой приложение заново.'};
 export default function App() {
   const [tab, setTab] = useState<Tab>('tap');
   const [me, setMe] = useState<MeResponse | null>(null);
@@ -228,7 +228,7 @@ export default function App() {
     const target = ((270 - index * 60) % 360 + 360) % 360;
     setRotation(previous => previous + 360 * 5 + ((target - previous % 360 + 360) % 360));
     await pause(3500);
-    setResult(`+${format(response.reward)} игровых звёзд`);
+    setResult(`+${format(response.reward)} Paddy Coins`);
   });
   const openCase = (item: CaseDto) => void run(async () => {
     setPreviewCase(item); setCaseDone(false); setOffset(0); setRolling(false); setStrip([]);
@@ -249,7 +249,7 @@ export default function App() {
       setRolling(false); setCaseDone(true);
     } catch (error) {setPreviewCase(null); throw error;}
   });
-  const sell = (card: CardDto) => void run(async () => {const response = await api.sellCard(card.id); setNotice(`Карточка обменяна на ${format(response.price)} игровых звёзд.`);});
+  const sell = (card: CardDto) => void run(async () => {const response = await api.sellCard(card.id); setNotice(`Карточка обменяна на ${format(response.price)} Paddy Coins.`);});
   if (fatal) return <main className="screen center"><h1>PADDY GAME</h1><p>{fatal}</p></main>;
   if (!me) return <main className="screen center"><div className="loader"/><p>Загружаем коллекцию…</p></main>;
   const wheelRemaining = Math.max(0, Math.ceil((me.wheelReadyAt - now) / 1000));
@@ -266,11 +266,11 @@ export default function App() {
         <span className="paddy-avatar">{me.user.firstName.slice(0, 1).toUpperCase()}</span>
         <span className="logo">PADDY<b>GAME</b></span>
       </button>
-      <div className="paddy-wallet"><small>Игровые звёзды</small><strong>✦ {format(me.user.balance)}</strong></div>
+      <div className="paddy-wallet"><small>Paddy Coins</small><strong>✦ {format(me.user.balance)}</strong></div>
     </header>
     {notice && <div className="collection-notice" role="status">{notice}<button aria-label="Закрыть уведомление" onClick={() => setNotice('')}>×</button></div>}
-    {tab === 'tap' && <section className="collection-tap-page"><h1>Кликер</h1>
-      <button className="tap" onClick={tap} aria-label="Заработать игровые звёзды"><span className="paddy-coin" aria-hidden="true">✦<small>PADDY</small></span></button>
+    {tab === 'tap' && <section className="collection-tap-page">
+      <button className="tap" onClick={tap} aria-label="Заработать Paddy Coins"><span className="paddy-coin" aria-hidden="true">✦<small>PADDY</small></span></button>
       <p>+{me.clicker.perTap} ✦ за тап · всего {format(me.user.totalClicks)}</p>
       <div className="clicker-upgrades">
         <article><h2>Сила тапа</h2><p>Следующий уровень даёт +1 ✦ за тап.</p>
@@ -312,7 +312,7 @@ export default function App() {
             <label>{sourceGift ? sourceGift.name : 'Твоя ставка'}
               <input className="input" type="number" min="1" max="100000000" step="1" disabled={busy || !!sourceCard} value={stake} onChange={e => {setBet(Number(e.target.value));resetUpgrade();}}/>
             </label>
-            {sourceCard && <button className="collection-link" disabled={busy} onClick={() => {setSourceCard(null);resetUpgrade();}}>Ставить звёзды</button>}
+            {sourceCard && <button className="collection-link" disabled={busy} onClick={() => {setSourceCard(null);resetUpgrade();}}>Ставить Paddy Coins</button>}
           </div>
           <div className="upgrade-slot">
             <label>Цель
@@ -335,7 +335,7 @@ export default function App() {
           </div>
         </div>
         <p className="collection-muted">Диапазон награды: {format(Math.ceil(bet / 10))}–{format(bet * 10)} ✦</p>
-        <label>Игровые звёзды
+        <label>Paddy Coins
           <input className="input" type="number" min="1" max="100000000" disabled={busy} value={bet} onChange={e => {setBet(Number(e.target.value));setMysteryResult(null);}}/>
         </label>
         <button className="btn" disabled={busy || !Number.isSafeInteger(bet) || bet < 1 || bet > me.user.balance} onClick={revealMystery}>{mysteryOpening ? 'Раскрываем…' : 'Раскрыть Мистери'}</button>
@@ -344,7 +344,7 @@ export default function App() {
         <div className={`case-cover case-${item.theme}`} aria-hidden="true">{item.giftIds.map(id => {
           const gift = gifts.find(g=>g.id===id);
           return gift && <div key={id}><LottiePlayer url={gift.animation_url}/></div>;
-        })}</div><h2>{item.name}</h2><p>{format(item.price_coins)} игровых ✦</p>
+        })}</div><h2>{item.name}</h2><p>{format(item.price_coins)} Paddy Coins</p>
         <button className="btn" disabled={busy || me.user.balance<item.price_coins} onClick={()=>openCase(item)}>Открыть</button>
       </article>)}</div>}
       {game==='rocket' && <div className="collection-panel rocket-panel">
@@ -361,7 +361,7 @@ export default function App() {
           : 'Ракета в полёте · новый старт каждые 10 с'}</p>
         {rocket?.bet?.status === 'flying' ? <button className="btn" disabled={busy} onClick={()=>void run(async()=>{
           setRocket(await api.cashRocket(rocket.bet!.launched));
-        })}>Забрать звёзды</button> : rocket?.bet?.status === 'queued' ? (
+        })}>Забрать Paddy Coins</button> : rocket?.bet?.status === 'queued' ? (
           <p role="status">Карточка принята на следующий старт{rocket.bet.autoX ? ` · автостоп ×${rocket.bet.autoX}` : ''}</p>
         ) : <>
           {rocket?.bet?.status === 'crashed' && <p>Карточка потрачена.</p>}
@@ -388,7 +388,7 @@ export default function App() {
       <button aria-pressed={collectionView==='album'} onClick={()=>setCollectionView('album')}>Альбом</button>
       <button aria-pressed={collectionView==='catalog'} onClick={()=>setCollectionView('catalog')}>Каталог</button>
     </div>}
-    {tab==='games' && game==='collection' && collectionView==='album' && <section><details className="album-inventory"><summary>Мои карточки · {me.collection.length}</summary><div className="collection-heading"><h1>Моя коллекция</h1><span>{me.collection.length} карточек</span></div>{me.collection.length===0?<div className="collection-panel"><span className="collection-large">◇</span><h2>Первая карточка впереди</h2><p>Натапай звёзды и попробуй апгрейд.</p><button className="btn" onClick={()=>{setTab('games');openGame('upgrade');}}>К апгрейду</button></div>:<div className="collection-grid">{me.collection.map(card=>{const gift=gifts.find(g=>g.id===card.giftId);return <article key={card.id}><div className="collection-card-art">{gift && <LottiePlayer url={gift.animation_url}/>}</div><h3>{gift?.name??'Карточка'}</h3><p>{format(gift?.price_stars??0)} игровых ✦</p><small>{gift && priceText(gift)}</small><button className="collection-link" disabled={busy || !gift} onClick={()=>{setSourceCard(card);setTab('games');openGame('upgrade');setResult('');}}>Улучшить карточку →</button><button className="btn" disabled={busy || !gift} onClick={()=>sell(card)}>Продать за игровые ✦</button></article>;})}</div>}
+    {tab==='games' && game==='collection' && collectionView==='album' && <section><details className="album-inventory"><summary>Мои карточки · {me.collection.length}</summary><div className="collection-heading"><h1>Моя коллекция</h1><span>{me.collection.length} карточек</span></div>{me.collection.length===0?<div className="collection-panel"><span className="collection-large">◇</span><h2>Первая карточка впереди</h2><p>Натапай Paddy Coins и попробуй апгрейд.</p><button className="btn" onClick={()=>{setTab('games');openGame('upgrade');}}>К апгрейду</button></div>:<div className="collection-grid">{me.collection.map(card=>{const gift=gifts.find(g=>g.id===card.giftId);return <article key={card.id}><div className="collection-card-art">{gift && <LottiePlayer url={gift.animation_url}/>}</div><h3>{gift?.name??'Карточка'}</h3><p>{format(gift?.price_stars??0)} Paddy Coins</p><small>{gift && priceText(gift)}</small><button className="collection-link" disabled={busy || !gift} onClick={()=>{setSourceCard(card);setTab('games');openGame('upgrade');setResult('');}}>Улучшить карточку →</button><button className="btn" disabled={busy || !gift} onClick={()=>sell(card)}>Продать за Paddy Coins</button></article>;})}</div>}
     </details></section>}
     {tab==='games' && game==='collection' && collectionView==='catalog' && <section>
       <div className="collection-heading"><h2>Каталог подарков</h2><span>{fresh}/{gifts.length} актуальных цен</span></div><p className="collection-muted">Изображения подарков используются как виртуальные карточки. Рыночная цена служит ориентиром игровой стоимости. Никаких реальных активов.</p><input className="input" aria-label="Найти карточку" placeholder="Найти карточку…" value={search} onChange={e=>{setSearch(e.target.value);setLimit(20);}}/><div className="collection-grid">{sorted.slice(0,limit).map(g=><article key={g.id}><div className="collection-card-art"><LottiePlayer url={g.animation_url}/></div><h3>{g.name}</h3><p>{format(g.price_stars)} ✦</p><small>{priceText(g)}</small><button className="collection-link" onClick={()=>{setSourceCard(null);setGiftId(g.id);openGame('upgrade');setTab('games');}}>Выбрать для апгрейда →</button></article>)}</div>{limit<sorted.length && <button className="btn" onClick={()=>setLimit(v=>v+20)}>Показать ещё</button>}</section>}
@@ -454,7 +454,7 @@ export default function App() {
         </div>
       </section>)}
     </section>}
-    <nav className="bottom-nav">{([['tap','✦','Тапать'],['games','◈','Игры'],['profile','●','Профиль']] as const).map(([key,icon,title])=><button key={key} className={tab===key?'active':''} disabled={busy} onClick={()=>{setTab(key);if(key==='games')openGame(null);window.scrollTo(0,0);}}><span>{icon}</span><small>{title}</small></button>)}</nav>
+    <nav className="bottom-nav">{([['tap','✦','Paddy Coin'],['games','◈','Игры'],['profile','●','Профиль']] as const).map(([key,icon,title])=><button key={key} className={tab===key?'active':''} disabled={busy} onClick={()=>{setTab(key);if(key==='games')openGame(null);window.scrollTo(0,0);}}><span>{icon}</span><small>{title}</small></button>)}</nav>
     {previewCase && <div className="modal"><div className="modal-card"><h2>{previewCase.name}</h2><div className="collection-roulette" ref={stripRef}><div className="collection-roulette-pointer"/><div className="collection-strip" style={{transform:`translateX(${offset}px)`,transition:rolling?'transform 3.5s cubic-bezier(.1,.9,.2,1)':'none'}}>{strip.map((reward,index)=><div data-prize={index} key={index}>{gifts.find(g=>g.id===reward) && <LottiePlayer url={gifts.find(g=>g.id===reward)!.animation_url} style={{width:44,height:44}}/>}<strong>{gifts.find(g=>g.id===reward)?.name ?? 'Карточка'}</strong></div>)}</div></div>{caseDone?<><h3>{gifts.find(g=>g.id===caseReward)?.name ?? 'Карточка'} добавлена в коллекцию</h3><button className="btn" disabled={busy} onClick={()=>setPreviewCase(null)}>Готово</button></>:<p>Открываем…</p>}</div></div>}
   </main>;
 }
