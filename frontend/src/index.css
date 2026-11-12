@@ -463,3 +463,13 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 .rocket-lobby h3 {margin:0 0 10px;font-size:15px}
 .rocket-empty {padding:20px 8px;text-align:center;color:#c9d7ed}
 @keyframes lobby-in {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.mode-tile {display:flex;min-height:154px;justify-content:flex-end;isolation:isolate;padding:14px}
+.mode-tile .mode-cover {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 47%;z-index:-2}
+.mode-tile::before {background:linear-gradient(0deg,#10091bed,transparent 82%)}
+.mode-tile .mode-copy {text-shadow:0 1px 6px #09060a}
+.mode-upgrade,.mode-wheel,.mode-collection,.mode-rocket {min-height:160px}
+.rocket-panel .rocket-scene {height:225px;min-height:225px;background:radial-gradient(ellipse at 70% 80%,#1d705145,transparent 60%),repeating-linear-gradient(0deg,transparent 0 22px,#9ee7ca22 23px 24px),repeating-linear-gradient(90deg,transparent 0 22px,#9ee7ca22 23px 24px),#101d23}
+.rocket-panel .rocket-scene.crashed {animation:none;background:radial-gradient(ellipse at 65% 60%,#7e263a,#241625 75%)}
+.rocket-ship {width:clamp(54px,16vw,76px);height:clamp(54px,16vw,76px)}
+.rocket-lobby {animation-delay:0s}

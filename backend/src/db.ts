@@ -281,7 +281,7 @@ export const improveClicker = db.transaction((id: number, action: 'power'|'bear'
   return {reward};
 }).immediate;
 
-db.exec(`CREATE TABLE IF NOT EXISTS rocket_rounds (
+db.exec(`CREATE TABLE IF NOT EXISTS rocket_rounds_v2 (
   launched INTEGER PRIMARY KEY,
   crash_ms INTEGER NOT NULL
 )`);
@@ -289,8 +289,8 @@ if (!(db.pragma('table_info(rocket_flights)') as {name:string}[]).some(column =>
   db.exec('ALTER TABLE rocket_flights ADD COLUMN auto_x REAL');
 }
 
-const rocketPeriod = 25_000;
-const rocketGrowth = 6000;
+const rocketPeriod = 15_000;
+const rocketGrowth = 7000;
 if (!(db.pragma('table_info(rocket_flights)') as {name:string}[]).some(column => column.name === 'growth_ms')) {
   db.exec('ALTER TABLE rocket_flights ADD COLUMN growth_ms INTEGER NOT NULL DEFAULT 2500');
 }
@@ -300,12 +300,12 @@ function flight(id: number) {
 }
 const multiplierAt = (elapsed: number, growth = rocketGrowth) => Math.floor(Math.exp(Math.max(0,elapsed) / growth) * 100) / 100;
 function roundCrash(launched: number) {
-  const existing = db.prepare('SELECT crash_ms FROM rocket_rounds WHERE launched=?').get(launched) as {crash_ms:number}|undefined;
+  const existing = db.prepare('SELECT crash_ms FROM rocket_rounds_v2 WHERE launched=?').get(launched) as {crash_ms:number}|undefined;
   if (existing) return existing.crash_ms;
   const factor = Math.max(1, 0.94 / ((crypto.randomInt(1_000_000) + 1) / 1_000_000));
-  const crash = Math.min(15000, Math.floor(rocketGrowth * Math.log(factor)));
-  db.prepare('INSERT OR IGNORE INTO rocket_rounds VALUES (?,?)').run(launched,crash);
-  return (db.prepare('SELECT crash_ms FROM rocket_rounds WHERE launched=?').get(launched) as {crash_ms:number}).crash_ms;
+  const crash = Math.min(8000, Math.floor(rocketGrowth * Math.log(factor)));
+  db.prepare('INSERT OR IGNORE INTO rocket_rounds_v2 VALUES (?,?)').run(launched,crash);
+  return (db.prepare('SELECT crash_ms FROM rocket_rounds_v2 WHERE launched=?').get(launched) as {crash_ms:number}).crash_ms;
 }
 function payRocket(id: number, stake: number, multiplier: number) {
   const payout = Math.floor(stake * multiplier);
@@ -329,11 +329,11 @@ export const getRocket = db.transaction((id: number) => {
   const elapsed = now - launched;
   const row = flight(id);
   return {
-    launched, now, nextLaunch:launched + rocketPeriod, growthMs:rocketGrowth,
-    history:(db.prepare('SELECT crash_ms FROM rocket_rounds WHERE launched < ? AND launched % ? = 0 ORDER BY launched DESC LIMIT 20').all(launched,rocketPeriod) as {crash_ms:number}[]).map(round=>multiplierAt(round.crash_ms)),
+    launched, now, nextLaunch:launched + rocketPeriod, growthMs:rocketGrowth, flightMs:8000,
+    history:(db.prepare('SELECT crash_ms FROM rocket_rounds_v2 WHERE launched < ? AND launched % ? = 0 ORDER BY launched DESC LIMIT 20').all(launched,rocketPeriod) as {crash_ms:number}[]).map(round=>multiplierAt(round.crash_ms)),
     entries:db.prepare(`SELECT COALESCE(u.first_name,'Игрок') AS name, f.stake
       FROM rocket_flights f JOIN users u USING(telegram_id) WHERE f.launched=? ORDER BY f.telegram_id`).all(launched+rocketPeriod),
-    phase:elapsed < crash ? 'flying' : 'crashed',
+    phase:elapsed < crash ? 'flying' : elapsed < crash + 5000 ? 'crashed' : 'lobby',
     multiplier:multiplierAt(Math.min(crash,elapsed)),
     bet:row ? {
       launched:row.launched, stake:row.stake, payout:row.payout, autoX:row.auto_x,
@@ -381,7 +381,7 @@ export function settleRocketAutos() {
   const now = Date.now();
   const users = db.prepare('SELECT telegram_id FROM rocket_flights WHERE auto_x IS NOT NULL AND payout IS NULL AND launched <= ?').all(now) as {telegram_id:number}[];
   for (const user of users) db.transaction(settleAuto).immediate(user.telegram_id,now);
-  db.prepare('DELETE FROM rocket_rounds WHERE launched < ?').run(now - 30 * 86400_000);
+  db.prepare('DELETE FROM rocket_rounds_v2 WHERE launched < ?').run(now - 30 * 86400_000);
 }
 
 export const openCase = db.transaction((telegramId: number, caseId: number) => {

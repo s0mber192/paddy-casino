@@ -12,37 +12,6 @@ const gameModes = [
 ] as const;
 type Game = typeof gameModes[number]['id'];
 type Tab = 'tap' | 'games' | 'profile';
-function ModeIllustration({mode}: {mode: Game}) {
-  return <svg className="mode-illustration" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-    {mode === 'collection' && <g transform="rotate(-12 60 60)">
-      <rect x="27" y="24" width="70" height="77" rx="10" fill="#2a1728" stroke="#ffbb73" strokeWidth="3"/>
-      <path d="M39 24v77M47 33h42" stroke="#ffbb73" strokeWidth="3"/>
-      <rect x="49" y="43" width="34" height="40" rx="5" fill="#a4524a" stroke="#ffdba7"/>
-      <path d="m66 49 11 14-11 13-11-13z" fill="#ffcf8f"/>
-    </g>}
-    {(mode === 'upgrade' || mode === 'wheel') && <>
-      <circle cx="60" cy="60" r="42" fill="#142520" stroke="#e9c783" strokeWidth="4"/>
-      <circle cx="60" cy="60" r="34" stroke="#fff5cf" strokeWidth="7" strokeDasharray={mode==='upgrade'?'58 156':'15 11'}/>
-      <circle cx="60" cy="60" r="22" stroke="#e9c783" opacity=".45"/>
-      <path d="m54 14 6 13 6-13z" fill="#fff1bf"/>
-      <path d={mode==='upgrade'?'m49 66 11-17 11 17M60 50v24':'m60 44 5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z'} stroke="#ffdf9e" strokeWidth="3" strokeLinejoin="round"/>
-    </>}
-    {mode === 'mystery' && <>
-      <circle cx="60" cy="53" r="32" fill="#30204a" stroke="#e6b5ff" strokeWidth="3"/>
-      <path d="M42 86h36l8 11H34z" fill="#9368b4" stroke="#e6b5ff"/>
-      <path d="m60 34 5 14 14 5-14 5-5 14-5-14-14-5 14-5z" fill="#e6b5ff"/>
-    </>}
-    {mode === 'rocket' && <g transform="rotate(28 60 60)">
-      <path d="M60 13C45 25 41 50 46 79h28c5-29 1-54-14-66Z" fill="#c2ecff" stroke="#fff" strokeWidth="3"/>
-      <circle cx="60" cy="48" r="9" fill="#264965"/>
-      <path d="M47 61 34 84l13-6m26-17 13 23-13-6M53 84l7 24 7-24" fill="#ffc377"/>
-    </g>}
-    {mode === 'cases' && <>
-      <rect x="26" y="48" width="68" height="43" rx="8" fill="#24445c" stroke="#bceaff" strokeWidth="3"/>
-      <path d="m26 51 12-24h44l12 24M26 62h68M55 62v13h10V62" stroke="#bceaff" strokeWidth="3" strokeLinejoin="round"/>
-    </>}
-  </svg>;
-}
 const format = (value: number) => value.toLocaleString('ru-RU');
 const errors: Record<string,string> = {TOO_FAST: 'Достигнут лимит скорости тапов.', NO_OFFLINE_REWARD: 'Медведи ещё копят Paddy Coins.', ROCKET_ACTIVE: 'Полёт уже идёт.', INSUFFICIENT_FUNDS: 'Не хватает Paddy Coins. Натапай ещё!', WHEEL_COOLDOWN: 'Колесо доступно раз в 24 часа.', BAD_AMOUNT: 'Проверь сумму: нужно положительное целое число.', BAD_REQUEST: 'Проверь введённые данные.', CARD_NOT_FOUND: 'Карточка уже продана. Коллекция обновлена.', UNAUTHORIZED: 'Сессия истекла. Открой приложение заново.'};
 export default function App() {
@@ -179,8 +148,8 @@ export default function App() {
   useEffect(() => {
     if (paidFlight !== null) void refresh().catch(()=>{});
   },[paidFlight,refresh]);
-  const rocketProgress = Math.min(1,Math.log(Math.max(1,flightFactor))/1.65);
-  const rocketCurve = Array.from({length:25},(_,i)=>{const t=i*rocketProgress/24;return `${8+84*t},${88-70*t**1.55}`;}).join(' ');
+  const rocketProgress = rocket ? Math.min(1,Math.log(Math.max(1,flightFactor))*rocket.growthMs/rocket.flightMs) : 0;
+  const rocketCurve = Array.from({length:25},(_,i)=>{const t=i*rocketProgress/24;return `${9+81*t},${83-61*t**1.55}`;}).join(' ');
   const selected = gifts.find(g => g.id === giftId);
   const sourceGift = sourceCard && gifts.find(g => g.id === sourceCard.giftId);
   const stake = sourceGift ? sourceGift.price_stars : bet;
@@ -291,7 +260,7 @@ export default function App() {
         <div className="collection-heading"><h1>Игры</h1></div>
         <div className="mode-grid">
           {gameModes.map(mode => <button key={mode.id} className={`mode-tile mode-${mode.id}`} disabled={busy} onClick={() => openGame(mode.id)}>
-            <span className="mode-art mode-layout" aria-hidden="true"><ModeIllustration mode={mode.id}/></span>
+            <img className="mode-cover" src={`/modes/${mode.id}.png`} alt="" decoding="async"/>
             <span className="mode-copy"><strong>{mode.title}</strong><small>{mode.description}</small></span>
           </button>)}
         </div>
@@ -351,18 +320,18 @@ export default function App() {
       {game==='rocket' && <div className="collection-panel rocket-panel">
         <h2>Ракета</h2>
         <div className="rocket-history" aria-label="Последние краши">{rocket?.history.map((value,i)=><span key={i}>×{value.toFixed(2)}</span>)}</div>
-        <div key={rocket?.launched} className={`rocket-scene ${rocket?.phase ?? 'ready'}`}>
+        {rocket?.phase !== 'lobby' && <div key={rocket?.launched} className={`rocket-scene ${rocket?.phase ?? 'ready'}`}>
           <strong>×{flightFactor.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
           <svg className="rocket-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points={rocketCurve} fill="none" stroke="currentColor" strokeWidth="2.5" vectorEffect="non-scaling-stroke"/></svg>
-          <div className="rocket-ship" style={{left:`${8+84*rocketProgress}%`,top:`${88-70*rocketProgress**1.55}%`}}>
+          <div className="rocket-ship" style={{left:`${9+81*rocketProgress}%`,top:`${83-61*rocketProgress**1.55}%`}}>
             <LottiePlayer url={gifts.find(g=>g.id==='143')?.animation_url ?? ''}/>
           </div>
           {rocket?.phase==='crashed' && <div className="rocket-shards" key={rocket.launched} aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{'--shard-angle':`${i*40}deg`} as React.CSSProperties}/>)}</div>}
-        </div>
+        </div>}
         <p>{!rocket ? 'Загружаем раунд…' : rocket.phase === 'crashed'
           ? `Краш · следующий старт через ${Math.max(1,Math.ceil((rocket.nextLaunch-rocket.now)/1000))} с`
-          : 'Ракета в полёте'}</p>
-        {rocket?.phase==='crashed' && <section className="rocket-entries rocket-lobby">
+          : rocket.phase === 'lobby' ? `Старт через ${Math.max(1,Math.ceil((rocket.nextLaunch-rocket.now)/1000))} с` : 'Ракета в полёте'}</p>
+        {rocket?.phase==='lobby' && <section className="rocket-entries rocket-lobby">
           <h3>Ставки следующего раунда</h3>
           {rocket.entries.length ? <ul>{rocket.entries.map((entry,i)=><li key={i}><span>{entry.name}</span><strong>{format(entry.stake)} Paddy Coins</strong></li>)}</ul> : <p className="rocket-empty">✦ Пока ставок нет</p>}
         </section>}
