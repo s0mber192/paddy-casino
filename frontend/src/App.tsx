@@ -179,7 +179,7 @@ export default function App() {
   useEffect(() => {
     if (paidFlight !== null) void refresh().catch(()=>{});
   },[paidFlight,refresh]);
-  const rocketProgress = Math.min(1,Math.log(Math.max(1,flightFactor))/3);
+  const rocketProgress = Math.min(1,Math.log(Math.max(1,flightFactor))/1.65);
   const rocketCurve = Array.from({length:25},(_,i)=>{const t=i*rocketProgress/24;return `${8+84*t},${88-70*t**1.55}`;}).join(' ');
   const selected = gifts.find(g => g.id === giftId);
   const sourceGift = sourceCard && gifts.find(g => g.id === sourceCard.giftId);
@@ -291,10 +291,7 @@ export default function App() {
         <div className="collection-heading"><h1>Игры</h1></div>
         <div className="mode-grid">
           {gameModes.map(mode => <button key={mode.id} className={`mode-tile mode-${mode.id}`} disabled={busy} onClick={() => openGame(mode.id)}>
-            <span className="mode-art mode-layout" aria-hidden="true"><ModeIllustration mode={mode.id}/>{mode.art.map((id,index)=>{
-              const gift = gifts.find(item=>item.id===id);
-              return gift && <span className="mode-gift gift-position" key={id} style={{'--angle':`${index * 360 / mode.art.length}deg`, '--slot':index} as React.CSSProperties}><LottiePlayer url={gift.animation_url}/></span>;
-            })}</span>
+            <span className="mode-art mode-layout" aria-hidden="true"><ModeIllustration mode={mode.id}/></span>
             <span className="mode-copy"><strong>{mode.title}</strong><small>{mode.description}</small></span>
           </button>)}
         </div>
@@ -354,7 +351,7 @@ export default function App() {
       {game==='rocket' && <div className="collection-panel rocket-panel">
         <h2>Ракета</h2>
         <div className="rocket-history" aria-label="Последние краши">{rocket?.history.map((value,i)=><span key={i}>×{value.toFixed(2)}</span>)}</div>
-        <div className={`rocket-scene ${rocket?.phase ?? 'ready'}`}>
+        <div key={rocket?.launched} className={`rocket-scene ${rocket?.phase ?? 'ready'}`}>
           <strong>×{flightFactor.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
           <svg className="rocket-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points={rocketCurve} fill="none" stroke="currentColor" strokeWidth="2.5" vectorEffect="non-scaling-stroke"/></svg>
           <div className="rocket-ship" style={{left:`${8+84*rocketProgress}%`,top:`${88-70*rocketProgress**1.55}%`}}>
@@ -365,9 +362,9 @@ export default function App() {
         <p>{!rocket ? 'Загружаем раунд…' : rocket.phase === 'crashed'
           ? `Краш · следующий старт через ${Math.max(1,Math.ceil((rocket.nextLaunch-rocket.now)/1000))} с`
           : 'Ракета в полёте'}</p>
-        {rocket?.phase==='crashed' && <section className="rocket-entries">
+        {rocket?.phase==='crashed' && <section className="rocket-entries rocket-lobby">
           <h3>Ставки следующего раунда</h3>
-          {rocket.entries.length ? <ul>{rocket.entries.map((entry,i)=><li key={i}><span>{entry.name}</span><strong>{format(entry.stake)} Paddy Coins</strong></li>)}</ul> : <p>Пока ставок нет</p>}
+          {rocket.entries.length ? <ul>{rocket.entries.map((entry,i)=><li key={i}><span>{entry.name}</span><strong>{format(entry.stake)} Paddy Coins</strong></li>)}</ul> : <p className="rocket-empty">✦ Пока ставок нет</p>}
         </section>}
         {rocket?.bet?.status === 'flying' ? <button className="btn" disabled={busy} onClick={()=>void run(async()=>{
           setRocket(await api.cashRocket(rocket.bet!.launched));

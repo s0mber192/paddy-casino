@@ -453,3 +453,13 @@ html, body, #root { margin: 0; height: 100%; background: #000; color: var(--text
 @keyframes rocket-shatter {from{opacity:1;transform:rotate(var(--shard-angle)) scaleX(.02)} 40%{opacity:1} to{opacity:0;transform:rotate(var(--shard-angle)) translateX(18px) scaleX(1.2)}}
 .rocket-entries ul {list-style:none;padding:0;margin:0}
 .rocket-entries li {display:flex;justify-content:space-between;gap:8px;padding:6px;border-bottom:1px solid var(--line)}
+
+.mode-tile .mode-layout.mode-art {width:104px;height:90px}
+.mode-tile:not(.mode-upgrade) .mode-layout .mode-illustration {height:100%}
+.rocket-panel .rocket-scene.crashed {animation:crash-exit .65s both;background:radial-gradient(circle at 50% 50%,#782738,#251926 65%,#131621)}
+.rocket-scene.crashed .rocket-shards i {height:9px;clip-path:polygon(0 45%,100% 0,73% 60%,100% 100%);background:#ff9d9d;filter:drop-shadow(0 0 9px #ff4059)}
+@keyframes crash-exit {0%,75%{height:190px;min-height:190px;opacity:1}100%{height:0;min-height:0;opacity:0}}
+.rocket-lobby {width:100%;border:1px solid #485168;border-radius:16px;padding:16px;background:radial-gradient(ellipse at 50% 0,#283b55,#141a24 78%);animation:lobby-in .3s .5s both}
+.rocket-lobby h3 {margin:0 0 10px;font-size:15px}
+.rocket-empty {padding:20px 8px;text-align:center;color:#c9d7ed}
+@keyframes lobby-in {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}

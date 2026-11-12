@@ -290,7 +290,7 @@ if (!(db.pragma('table_info(rocket_flights)') as {name:string}[]).some(column =>
 }
 
 const rocketPeriod = 25_000;
-const rocketGrowth = 5000;
+const rocketGrowth = 6000;
 if (!(db.pragma('table_info(rocket_flights)') as {name:string}[]).some(column => column.name === 'growth_ms')) {
   db.exec('ALTER TABLE rocket_flights ADD COLUMN growth_ms INTEGER NOT NULL DEFAULT 2500');
 }
